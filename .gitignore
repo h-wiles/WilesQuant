@@ -168,4 +168,4 @@ chronos-2-finetuned
 .kiro
 
 
-*.csv
+price_data/
