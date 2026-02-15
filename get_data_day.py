@@ -1,65 +1,77 @@
-import schedule
-import time
-import baostock as bs
-import akshare as ak
+from MyUtils import get_stock_baostock
+from datetime import datetime, timedelta
+from tqdm import tqdm
 import pandas as pd
+import os
+import logging
+import warnings
+warnings.filterwarnings("ignore")
+logging.basicConfig(filename="./logs/get_data.log", level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', encoding="utf-8")
+logger = logging.getLogger()
 
 
-def get_stocks_baostock():
-    """
-    使用Baostock获取A股股票列表
-    """
+def get_basic_data():
+    logger.info("=================get_basic_data=====================")
+    today = datetime.today()
+    past_day = today - timedelta(days=1000)
+    start_date, end_date = str(past_day)[:10], str(today)[:10]
+    logger.info(f"begin basic data generate: start_date {start_date}, end_date {end_date}, time now {today}")
+
+    root_path = os.path.abspath('.')
+    root_path = os.path.join(root_path, f'data/price_data')
+    if not os.path.exists(root_path):
+        os.mkdir(root_path)
+
+    stock_info = pd.read_csv("./data/stock_info.csv")
+    stock_codes = stock_info["code"].tolist()
+    stock_codes = [code for code in stock_codes if not (code.startswith(("sh.68", "sz.30")))]   # 去掉创业板和科创板
     try:
-        # 登录系统
-        lg = bs.login()
+        for code in tqdm(stock_codes, desc="get basic data"):
+            df = get_stock_baostock(code, start_date=start_date, end_date=end_date)
 
-        # 获取证券基本资料
-        rs = bs.query_stock_basic()
-
-        # 获取具体数据
-        data_list = []
-        while (rs.error_code == '0') & rs.next():
-            # 获取一条记录，将记录合并在一起
-            data_list.append(rs.get_row_data())
-
-        # 转换为DataFrame
-        result = pd.DataFrame(data_list, columns=rs.fields)
-
-        print(f"获取到股票数量: {len(result)}")
-        print("\n股票列表:")
-        print(result.head(10))
-
-        # 登出系统
-        bs.logout()
-
-        return result
+            df.to_csv(f"{root_path}/{code}.csv", index=False)
+        logger.info(f"basic data generate success, total codes: {len(stock_codes)}")
     except Exception as e:
-        print(f"获取股票列表失败: {e}")
-        return None
+        logger.error("basic data generate fail, error: ", e)
 
 
-# 定义你希望每天7点执行的任务
-def get_stock_data():
-    lg = bs.login()
-    # 显示登陆返回信息
-    print('login respond error_code:' + lg.error_code)
-    print('login respond  error_msg:' + lg.error_msg)
+def update_data():
+    logger.info("==================update_data=======================")
+    basic_data_path = "./data/price_data"
+    today = datetime.today()
+    stock_info = pd.read_csv("./data/stock_info.csv")
+    stock_codes = stock_info["code"].tolist()
+    stock_codes = [code for code in stock_codes if not (code.startswith(("sh.68", "sz.30")))]  # 去掉创业板和科创板
+    logger.info(f"begin data update: time now {today}")
 
-    rs = bs.query_history_k_data_plus("sh.600000",
-                                      "date,code,open,high,low,close,preclose,volume,amount,adjustflag,turn,tradestatus,pctChg,isST",
-                                      start_date='2025-07-01', end_date='2025-12-31',
-                                      frequency="d", adjustflag="3")
-    print('query_history_k_data_plus respond error_code:' + rs.error_code)
-    print('query_history_k_data_plus respond  error_msg:' + rs.error_msg)
+    insert_n = 0
+    try:
+        for code in tqdm(stock_codes, desc="update data"):
+            file_path = os.path.join(basic_data_path, f"{code}.csv")
+            basic_data = pd.read_csv(file_path)
 
-# 每天下午7点执行任务
-# schedule.every().day.at("19:00").do(task)
+            start_date = basic_data.sort_values(by=["date"], ascending=False).iloc[0]["date"]
+            start_date = pd.to_datetime(start_date) + pd.Timedelta(days=1)
+            start_date = str(start_date)[:10]
+            end_date = str(today)[:10]
 
-# 持续检查并执行定时任务
-# while True:
-#     schedule.run_pending()
-#     time.sleep(1)  # 每秒检查一次
+            new_data = get_stock_baostock(code, start_date, end_date)
+            insert_n += len(new_data)
+
+            data = pd.concat([basic_data, new_data], axis=0, ignore_index=True)
+            data.to_csv(f"{basic_data_path}/{code}.csv", index=False)
+        logger.info(f"update data success, total update number: {insert_n}, total codes: {len(stock_codes)}")
+    except Exception as e:
+        logger.error("update data fail, error: ", e)
 
 
+# 每天19:00执行数据更新,使用工具：crontab，用crontab -e查看
 if __name__ == '__main__':
-    result = get_stocks_baostock()
+    # 如果基础数据存在
+    if os.path.exists("./data/price_data") and os.listdir(os.path.abspath("./data/price_data")):
+        update_data()
+    # 如果基础数据不存在
+    else:
+        get_basic_data()
+        update_data()
