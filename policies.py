@@ -1,51 +1,33 @@
-"""
-前一天日线KDJ的J到大负值，并且当天尾盘K线出现反转K形态
-"""
-
-import tushare as ts
+from MyUtils import get_ma_data
 import pandas as pd
-import logging
-from datetime import datetime, timedelta
-from MyUtils import get_intraday_minute_data, calculate_kdj
 
-# 创建一个Logger对象
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+def ma_diverge_policy():
+    """找出和5日线偏离5%以上并小于5%的股票，当天尾盘收盘价买入，止盈：2%，止损：1%"""
+    stock_info = pd.read_csv("./data/stock_info.csv")
+    stock_info = stock_info[stock_info["code"].apply(lambda x: not x.startswith(("sh.68", "sz.30")))]    #去掉科创板
+    stock_codes = stock_info["code"].tolist()
+    stock_names = stock_info["code_name"].tolist()
 
-# 创建一个文件处理器
-file_handler = logging.FileHandler('policy_1_log.log')
+    results = []
+    for code, name in zip(stock_codes, stock_names):
+        df = pd.read_csv("./data/price_data/" + code + ".csv")
 
-# 创建一个日志格式化器
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
+        df = get_ma_data(df)
+        df = df.dropna(subset=["ma5"])
 
-# 将文件处理器添加到Logger中
-logger.addHandler(file_handler)
+        today_df = df.tail(1)
+        if len(today_df)>0:     # 防止新股存在没有
+            date = today_df["date"].iloc[0]
+            ma5 = today_df["ma5"].iloc[0]
+            close = today_df["close"].iloc[0]
+            premium_rate = (ma5 - close)/ma5
 
-# 设置你的token
-ts.set_token('xxx')
-pro = ts.pro_api()
+            if premium_rate > 0.05:
+                results.append({"date":date , "code": code, "name":name, "close":close, "ma5":ma5, "premium_rate": premium_rate})
 
-# 查询当前所有正常上市交易的股票列表
-data = pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,list_date')
-data = data[~data['name'].str.contains('ST')]   # 除去ST股
+    return results
 
-today = datetime.today().strftime('%Y%m%d')
-yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y%m%d')
 
-for code in data.ts_code:
-    df = pro.daily(ts_code=code)   # 获取当前股票历史K线数据
-    df = df.sort_values(by=['trade_date'], ascending=True)
-
-    kdj_df = calculate_kdj(df=df)
-    kdj_today = kdj_df['j'].values[-1]
-    kdj_yesterday = kdj_df['j'].values[-2]
-
-    rt_df = pro.rt_k(ts_code=code, freq="1MIN")     # 当前股票分时数据
-
-    amp = (rt_df['close']-rt_df['open'])/rt_df['open']
-
-    if (kdj_today<0 or kdj_yesterday<0) and amp < 0.3/100 :
-        # 输出日志信息
-        logger.info('KDJ+反转K策略筛选股票: ')
-
+if __name__ == '__main__':
+    answer = ma_diverge_policy()
+    print(answer)
