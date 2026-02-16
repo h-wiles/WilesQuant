@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from get_entry_point import ma5_diverge_entry
+from get_entry_point import EntryPoint
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
@@ -65,6 +65,6 @@ def backtest_tp_sl(df, price_col='close', signal_col='signal',
 
 if __name__ == '__main__':
     code = "sh.600052"
-    df = ma5_diverge_entry(code)
+    df = EntryPoint(code).ma5_diverge_entry()
 
     res = backtest_tp_sl(df)

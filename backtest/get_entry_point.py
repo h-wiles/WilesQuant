@@ -4,7 +4,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 class EntryPoint:
-    def __int__(self, code, signal_col="signal"):
+    def __init__(self, code, signal_col="signal"):
         df = pd.read_csv(f"../data/price_data/{code}.csv")
         self.df = df
         self.signal_col = signal_col

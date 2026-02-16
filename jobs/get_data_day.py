@@ -1,4 +1,4 @@
-from MyUtils import get_stock_baostock
+from utils.MyUtils import get_stock_baostock
 from datetime import datetime, timedelta
 import baostock as bs
 from tqdm import tqdm

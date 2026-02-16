@@ -1,4 +1,4 @@
-from MyUtils import get_ma_data
+from utils.MyUtils import get_ma_data
 import pandas as pd
 
 def ma_diverge_policy():
