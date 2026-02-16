@@ -1,5 +1,6 @@
 from MyUtils import get_stock_baostock
 from datetime import datetime, timedelta
+import baostock as bs
 from tqdm import tqdm
 import pandas as pd
 import os
@@ -12,9 +13,10 @@ logger = logging.getLogger()
 
 
 def get_basic_data():
+    bs.login()
     logger.info("=================get_basic_data=====================")
     today = datetime.today()
-    past_day = today - timedelta(days=1000)
+    past_day = today - timedelta(days=2000)
     start_date, end_date = str(past_day)[:10], str(today)[:10]
     logger.info(f"begin basic data generate: start_date {start_date}, end_date {end_date}, time now {today}")
 
@@ -34,6 +36,7 @@ def get_basic_data():
         logger.info(f"basic data generate success, total codes: {len(stock_codes)}")
     except Exception as e:
         logger.error("basic data generate fail, error: ", e)
+    bs.logout()
 
 
 def update_data():
