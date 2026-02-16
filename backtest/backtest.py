@@ -1,14 +1,13 @@
+import matplotlib.pyplot as plt
+from get_entry_point import ma5_diverge_entry
 import pandas as pd
-from MyUtils import get_ma_data
-import numpy as np
-from collections import defaultdict
-import json
 import warnings
 warnings.filterwarnings("ignore")
 
 
 def backtest_tp_sl(df, price_col='close', signal_col='signal',
-                   initial_cash=10001, tp=0.02, sl=0.01):
+                   initial_cash=10000, tp=0.02, sl=0.01,
+                   plot_equity_curve=True):
     """
     带止盈止损的回测, 无手续费
 
@@ -54,8 +53,18 @@ def backtest_tp_sl(df, price_col='close', signal_col='signal',
     df['equity'] = equity_curve
     df['cum_return'] = df['equity'] / initial_cash - 1
 
+    if plot_equity_curve:
+        plt.figure(figsize=(10, 5))
+        plt.plot(pd.to_datetime(df["date"]), df['cum_return'])
+        plt.title("Equity Curve (TP 2% / SL 1%)")
+        plt.ylabel("Return")
+        plt.show()
+
     return df
 
 
+if __name__ == '__main__':
+    code = "sh.600052"
+    df = ma5_diverge_entry(code)
 
-
+    res = backtest_tp_sl(df)
