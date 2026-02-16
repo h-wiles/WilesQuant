@@ -57,20 +57,18 @@ def get_stock_baostock(stock_code="sh.600000", start_date="2026-01-05", end_date
     - pctChg：涨跌幅
     - isST：是否 ST 股票，是否ST股，1是，0否
     """
-    lg = bs.login()
 
     fields = "date,code,open,high,low,close,preclose,volume,amount,adjustflag,turn,tradestatus,pctChg,isST"
     rs = bs.query_history_k_data_plus(stock_code,
                                       fields=fields,
                                       start_date=start_date, end_date=end_date,
-                                      frequency="d", adjustflag="3")
+                                      frequency="d", adjustflag="2")      # 前复权数据
     data_list = []
     while (rs.error_code == '0') & rs.next():
         # 获取一条记录，将记录合并在一起
         data_list.append(rs.get_row_data())
     result = pd.DataFrame(data_list, columns=rs.fields)
 
-    bs.logout()
     return result
 
 
@@ -137,5 +135,5 @@ def get_ma_data(df, price_col="close"):
 
 
 if __name__ == '__main__':
-    data = get_stock_baostock()
+    data = get_stock_baostock("sh.600052", start_date="2024-01-01", end_date="2024-01-30")
     print(data)
