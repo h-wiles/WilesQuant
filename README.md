@@ -35,7 +35,7 @@ The backend focuses on strategy implementation and backtesting, while the fronte
 * Dynamic stock code loading
 * Strategy result visualization (equity curve, signals)
 
-file struction
+## 🏗 Project Structure
 ```text
 ├── api
 │   └── price_api.py
@@ -65,14 +65,14 @@ file struction
     └── MyUtils.py
 ```
 
-run steps
+## 🚀 Getting Started
 ```text
 cd WilesQuantt
 python -m uvicorn main:app --reload     # 启动后端API
 打开 html文件
 ```
 
-notion
+## 📝 notion
 ```text
 申请域名后将main.py中的allow_origins改成域名
 ```
