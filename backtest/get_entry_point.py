@@ -32,7 +32,7 @@ class EntryPoint:
 
     def macd_golden_cross_entry(self):
         """
-        MACD金叉，收盘价进场
+        MACD金叉，快线水下上穿慢线，收盘价进场
         条件：
         1. DIF 上穿 DEA（金叉）
         2. 金叉发生在 0 轴下方
@@ -40,19 +40,19 @@ class EntryPoint:
 
         df = get_macd_data(self.df)
 
-        prev_macd = df['MACD'].shift(1)         # 前一天的值
-        prev_signal = df['MACD_signal'].shift(1)
+        prev_macd = df['DIFF'].shift(1)         # 前一天的值
+        prev_signal = df['DEA'].shift(1)
 
-        golden_cross = (prev_macd < prev_signal) & (df['MACD'] > df['MACD_signal'])      # macd金叉
+        golden_cross = (prev_macd < prev_signal) & (df['DIFF'] > df['DEA'])      # macd金叉
 
-        below_zero = df['MACD'] < 0     # 在零轴下方
+        below_zero = df['DIFF'] < 0     # 在零轴下方
         df.loc[golden_cross & below_zero, self.signal_col] = 1
 
         return df
 
     def macd_bullish_divergence_entry(self, lookback=20, signal_col="signal"):
         """
-        MACD底背离，收盘价进场
+        MACD底背离，macd红绿柱未创新低但是股价创近期新低，收盘价进场
         price 创前20天新低 + MACD 未创新低
         """
 
