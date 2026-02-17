@@ -153,9 +153,9 @@ def get_macd_data(df, fast=12, slow=26, signal=9):
     ema_fast = df['close'].ewm(span=fast, adjust=False).mean()
     ema_slow = df['close'].ewm(span=slow, adjust=False).mean()
 
-    df['MACD'] = ema_fast - ema_slow          # DIF
-    df['MACD_signal'] = df['MACD'].ewm(span=signal, adjust=False).mean()  # DEA
-    df['MACD_hist'] = df['MACD'] - df['MACD_signal']
+    df['DIFF'] = ema_fast - ema_slow          # 快线
+    df['DEA'] = df['DIFF'].ewm(span=signal, adjust=False).mean()  # 慢线
+    df['MACD'] = df['DIFF'] - df['DEA']     # 快慢线之差
 
     return df
 
