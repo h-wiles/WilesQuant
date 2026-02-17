@@ -65,6 +65,7 @@ def backtest_tp_sl(df, price_col='close', signal_col='signal',
 
 if __name__ == '__main__':
     code = "sh.600052"
-    df = EntryPoint(code).ma5_diverge_entry()
+    entry_df = EntryPoint(code).ma5_diverge_entry()
 
-    res = backtest_tp_sl(df)
+    res = backtest_tp_sl(entry_df)
+    print(res)
