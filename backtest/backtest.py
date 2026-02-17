@@ -63,9 +63,25 @@ def backtest_tp_sl(df, price_col='close', signal_col='signal',
     return df
 
 
-if __name__ == '__main__':
-    code = "sh.600052"
-    entry_df = EntryPoint(code).ma5_diverge_entry()
+def main_backtest(code, strategy):
+    ep = EntryPoint(code)
+    if strategy == "ma5 diverge":
+        entry_df = ep.ma5_diverge_entry()
+    elif strategy == "kdj oversold":
+        entry_df = ep.kdj_oversold_entry()
+    elif strategy == "macd golden cross":
+        entry_df = ep.macd_golden_cross_entry()
+    elif strategy == "macd bullish divergence":
+        entry_df = ep.macd_bullish_divergence_entry()
+    elif strategy == "volume breakout":
+        entry_df = ep.volume_breakout_entry()
+    else:
+        raise ValueError("strategy not supported")
 
-    res = backtest_tp_sl(entry_df)
-    print(res)
+    res = backtest_tp_sl(entry_df, price_col="close", signal_col="signal")
+    return res
+
+
+if __name__ == '__main__':
+    response = main_backtest("sh.600004", strategy="ma5 diverge")
+    print(response)
