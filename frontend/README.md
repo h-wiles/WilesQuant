@@ -9,7 +9,7 @@ npx tailwindcss init失败解决方案
 npm uninstall tailwindcss
 npm install tailwindcss@3.4.17 -D
 ```
-### run 
+### dev 
 ```text
 npm run dev
 ```
