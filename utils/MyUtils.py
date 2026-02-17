@@ -133,7 +133,33 @@ def get_ma_data(df, price_col="close"):
     df["ma60"] = df[price_col].rolling(window=60).mean().round(2)
     return df
 
+def get_kdj_data(df, n=9, k_period=3, d_period=3):
+    df = df.copy()
+
+    # RSV
+    low_n = df['low'].rolling(n).min()
+    high_n = df['high'].rolling(n).max()
+    rsv = (df['close'] - low_n) / (high_n - low_n) * 100
+
+    df['K'] = rsv.ewm(com=k_period - 1, adjust=False).mean()
+    df['D'] = df['K'].ewm(com=d_period - 1, adjust=False).mean()
+    df['J'] = 3 * df['K'] - 2 * df['D']
+
+    return df
+
+def get_macd_data(df, fast=12, slow=26, signal=9):
+    df = df.copy()
+
+    ema_fast = df['close'].ewm(span=fast, adjust=False).mean()
+    ema_slow = df['close'].ewm(span=slow, adjust=False).mean()
+
+    df['MACD'] = ema_fast - ema_slow          # DIF
+    df['MACD_signal'] = df['MACD'].ewm(span=signal, adjust=False).mean()  # DEA
+    df['MACD_hist'] = df['MACD'] - df['MACD_signal']
+
+    return df
+
 
 if __name__ == '__main__':
-    data = get_stock_baostock("sh.600052", start_date="2024-01-01", end_date="2024-01-30")
+    data = get_stock_baostock("sh.600004", start_date="2024-01-01", end_date="2024-01-30")
     print(data)
