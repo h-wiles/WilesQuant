@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LineChart, BarChart2, BrainCircuit } from "lucide-react";
+import { LineChart, BarChart2, BrainCircuit, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function StockDashboard() {
@@ -30,7 +30,7 @@ export default function StockDashboard() {
       <p className="text-gray-500">输入股票代码，选择你想要的分析方式</p>
       <div className="flex justify-center gap-3 mt-6">
         <Input
-          placeholder="例如：AAPL / 600519"
+          placeholder="例如：sh.600519"
           value={code}
           onChange={(e) => setCode(e.target.value)}
           className="max-w-xs"
@@ -87,13 +87,29 @@ export default function StockDashboard() {
     </div>
   );
 
+  const ReportPage = () => (
+    <div>
+      <BackBtn />
+      <Card className="p-8 shadow-xl rounded-2xl">
+        <h2 className="text-2xl font-bold mb-4">📑 财报分析</h2>
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <Card className="p-4">营收增长率：12%</Card>
+          <Card className="p-4">净利润增长率：18%</Card>
+          <Card className="p-4">ROE：21%</Card>
+          <Card className="p-4">资产负债率：45%</Card>
+        </div>
+        <div className="text-gray-500">未来可接入真实财报接口 + 图表分析</div>
+      </Card>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 p-10">
       <div className="max-w-5xl mx-auto">
         <Header />
 
         {page === "menu" && (
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-4 gap-6">
             <OptionCard
               title="K线图"
               value="kline"
@@ -112,12 +128,19 @@ export default function StockDashboard() {
               icon={BrainCircuit}
               desc="AI 自动生成投资建议"
             />
+            <OptionCard
+              title="财报分析"
+              value="report"
+              icon={FileText}
+              desc="公司基本面与财务指标"
+            />
           </div>
         )}
 
         {page === "kline" && <KLinePage />}
         {page === "strategy" && <StrategyPage />}
         {page === "ai" && <AIPage />}
+        {page === "report" && <ReportPage />}
       </div>
     </div>
   );
