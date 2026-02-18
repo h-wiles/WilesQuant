@@ -69,6 +69,12 @@ export default function StockDashboard() {
       fetchData();
     }, [code]);
 
+    function formatVol(v) {
+      if (v > 1e8) return (v / 1e8).toFixed(2) + " 亿";
+      if (v > 1e4) return (v / 1e4).toFixed(2) + " 万";
+      return v;
+    }
+
     const buildOption = () => {
       if (!kdata.length) return {};
 
@@ -80,21 +86,34 @@ export default function StockDashboard() {
         animation: false,
         animationDuration: 0,
         animationDurationUpdate: 0,
-        tooltip: {
-              trigger: "axis",
-              formatter: function (params) {
-                const k = params[0];
-                const v = k.data;
-                return `
-                  ${k.axisValue}<br/>
-                  开: ${v[1].toFixed(2)}<br/>
-                  收: ${v[2].toFixed(2)}<br/>
-                  低: ${v[3].toFixed(2)}<br/>
-                  高: ${v[4].toFixed(2)}
-                `;
-              }
-            },
 
+        tooltip: {
+          trigger: "axis",
+          triggerOn: "mousemove|click",
+          transitionDuration: 0,
+          enterable: false,
+          confine: true,
+          axisPointer: {
+            type: "cross",
+            animation: false
+          },
+
+          formatter: function (params) {
+            const k = params[0];                 // K线
+            const v = k.data;
+            const idx = k.dataIndex;             // ⭐ 当前索引
+            const volume = formatVol(kdata[idx].volume);
+
+            return `
+              <b>${k.axisValue}</b><br/>
+              开盘：${v[1].toFixed(2)}<br/>
+              收盘：${v[2].toFixed(2)}<br/>
+              最低：${v[3].toFixed(2)}<br/>
+              最高：${v[4].toFixed(2)}<br/>
+              <span style="color:#888">成交量：${volume}</span>
+            `;
+          }
+        },
 
         // ⭐ 鼠标十字线
         axisPointer: {
@@ -181,7 +200,9 @@ export default function StockDashboard() {
             xAxisIndex: 1,
             yAxisIndex: 1,
             data: volumes,
-            large: true
+            large: true,
+            silent: true,        // ⭐ 核心！鼠标忽略成交量
+            tooltip: { show: false }  // ⭐ 不参与 tooltip
           }
         ]
       };
