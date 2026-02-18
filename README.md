@@ -27,7 +27,7 @@ The backend focuses on strategy implementation and backtesting, while the fronte
 
 * REST API for frontend visualization
 
-### Frontend (HTML + JS)
+### Frontend (JavaScript + React（JSX）)
 
 * Interactive candlestick (K-line) chart
 * Volume histogram separated from price chart

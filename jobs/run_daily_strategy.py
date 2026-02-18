@@ -1,7 +1,7 @@
 from utils.MyUtils import get_ma_data
 import pandas as pd
 
-def ma_diverge_policy():
+def ma5_diverge_policy():
     """找出和5日线偏离5%以上并小于5%的股票，当天尾盘收盘价买入，止盈：2%，止损：1%"""
     stock_info = pd.read_csv("./data/stock_info.csv")
     stock_info = stock_info[stock_info["code"].apply(lambda x: not x.startswith(("sh.68", "sz.30")))]    #去掉科创板
