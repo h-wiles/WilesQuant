@@ -11,3 +11,13 @@
 2026-02-16 18:55:54,432 - root - INFO - begin data update: time now 2026-02-16 18:55:54.426668
 2026-02-16 19:01:57,918 - root - INFO - =================get_basic_data=====================
 2026-02-16 19:02:08,241 - root - INFO - begin basic data generate: start_date 2023-05-23, end_date 2026-02-16, time now 2026-02-16 19:01:58.897760
+2026-02-19 12:10:06,412 - root - INFO - =================get_basic_data=====================
+2026-02-19 12:10:06,413 - root - INFO - begin basic data generate: start_date 2020-08-29, end_date 2026-02-19, time now 2026-02-19 12:10:06.413008
+2026-02-19 12:14:17,088 - root - INFO - =================get_basic_data=====================
+2026-02-19 12:14:17,088 - root - INFO - begin basic data generate: start_date 2020-08-29, end_date 2026-02-19, time now 2026-02-19 12:14:17.088636
+2026-02-19 12:14:39,149 - root - INFO - =================get_basic_data=====================
+2026-02-19 12:14:39,149 - root - INFO - begin basic data generate: start_date 2020-08-29, end_date 2026-02-19, time now 2026-02-19 12:14:39.149565
+2026-02-19 12:28:53,371 - root - INFO - basic data generate success, total codes: 3062
+2026-02-19 12:28:53,415 - root - INFO - ==================update_data=======================
+2026-02-19 12:28:53,427 - root - INFO - begin data update: time now 2026-02-19 12:28:53.415357
+2026-02-19 12:29:19,872 - root - INFO - update data success, total update number: 0, total codes: 3062
