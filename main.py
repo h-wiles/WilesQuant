@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from api.price_api import router as price_router
+from api.backtest_api import router as backtest_router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Quant API")
@@ -13,3 +14,4 @@ app.add_middleware(
 )
 # 注册接口
 app.include_router(price_router)
+app.include_router(backtest_router)
