@@ -1,13 +1,12 @@
 import matplotlib.pyplot as plt
-from get_entry_point import EntryPoint
+from .get_entry_point import EntryPoint
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 
 
 def backtest_tp_sl(df, price_col='close', signal_col='signal',
-                   initial_cash=10000, tp=0.02, sl=0.01,
-                   plot_equity_curve=True):
+                   initial_cash=10000, tp=0.02, sl=0.01):
     """
     带止盈止损的回测, 无手续费
 
@@ -45,6 +44,7 @@ def backtest_tp_sl(df, price_col='close', signal_col='signal',
                     cash += position * entry_price * (1 - sl)
                 position = 0
                 entry_price = 0
+                df.loc[i, signal_col] = -1
 
         # ===== 计算每日资产 =====
         equity = cash + position * price
@@ -53,32 +53,34 @@ def backtest_tp_sl(df, price_col='close', signal_col='signal',
     df['equity'] = equity_curve
     df['cum_return'] = df['equity'] / initial_cash - 1
 
-    if plot_equity_curve:
-        plt.figure(figsize=(10, 5))
-        plt.plot(pd.to_datetime(df["date"]), df['cum_return'])
-        plt.title("Equity Curve (TP 2% / SL 1%)")
-        plt.ylabel("Return")
-        plt.show()
-
     return df
 
 
-def main_backtest(code, strategy):
+def main_backtest(code, strategy, plot_equity_curve=True):
     ep = EntryPoint(code)
-    if strategy == "ma5 diverge":
+    if strategy == "ma5_diverge":
         entry_df = ep.ma5_diverge_entry()
-    elif strategy == "kdj oversold":
+    elif strategy == "kdj_oversold":
         entry_df = ep.kdj_oversold_entry()
-    elif strategy == "macd golden cross":
+    elif strategy == "macd_golden_cross":
         entry_df = ep.macd_golden_cross_entry()
-    elif strategy == "macd bullish divergence":
+    elif strategy == "macd_bullish_divergence":
         entry_df = ep.macd_bullish_divergence_entry()
-    elif strategy == "volume breakout":
+    elif strategy == "volume_breakout":
         entry_df = ep.volume_breakout_entry()
     else:
         raise ValueError("strategy not supported")
 
     res = backtest_tp_sl(entry_df, price_col="close", signal_col="signal")
+    res = res.fillna(0)
+
+    if plot_equity_curve:
+        plt.figure(figsize=(10, 5))
+        plt.plot(pd.to_datetime(res["date"]), res['cum_return'])
+        plt.title("Equity Curve (TP 2% / SL 1%)")
+        plt.ylabel("Return")
+        plt.show()
+
     return res
 
 
