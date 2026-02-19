@@ -28,6 +28,14 @@ export default function StockDashboard() {
   const [code, setCode] = useState("");
   const [page, setPage] = useState(null);
 
+  // ===== 策略状态 =====
+  const [strategy, setStrategy] = useState("ma");
+  const [params, setParams] = useState({
+    short: 5,
+    long: 20,
+  });
+
+
   const OptionCard = ({ title, icon: Icon, value, desc }) => (
     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
       <Card
@@ -226,22 +234,253 @@ export default function StockDashboard() {
     );
   };
 
-  /* ===================== 其他页面保持不变 ===================== */
+  /* ===================== 量化策略界面 ===================== */
+  const StrategyPage = () => {
+    const [data, setData] = useState([]);
+    const [strategy, setStrategy] = useState("ma");
+    const [loading, setLoading] = useState(false);
+    const strategies = [
+      {
+        value: "ma5_diverge",
+        name: "MA5 乖离策略",
+        desc: "价格远离均线后回归，适合震荡行情"
+      },
+      {
+        value: "kdj_oversold",
+        name: "KDJ 超卖策略",
+        desc: "J < 0 时寻找反弹机会"
+      },
+      {
+        value: "macd_golden_cross",
+        name: "MACD 金叉",
+        desc: "趋势启动信号，适合波段"
+      },
+      {
+        value: "macd_bullish_divergence",
+        name: "MACD 底背离",
+        desc: "价格创新低但动能减弱"
+      },
+      {
+        value: "volume_breakout",
+        name: "放量突破",
+        desc: "成交量放大突破关键位"
+      }
+    ];
 
-  const StrategyPage = () => (
-    <div>
-      <BackBtn />
-      <Card className="p-8 shadow-xl rounded-2xl">
-        <h2 className="text-2xl font-bold mb-4">📊 量化策略回测</h2>
-        <div className="grid grid-cols-3 gap-4">
-          <Card className="p-4">收益率: 35%</Card>
-          <Card className="p-4">最大回撤: 8%</Card>
-          <Card className="p-4">胜率: 62%</Card>
-        </div>
-      </Card>
-    </div>
-  );
 
+    /* ================= 拉取回测数据 ================= */
+    const fetchBacktest = async () => {
+      setLoading(true);
+      const res = await fetch(`http://127.0.0.1:8000/api/backtest?code=${code}&strategy=${strategy}`);
+      const json = await res.json();
+      setData(json);
+      setLoading(false);
+    };
+
+    useEffect(() => {
+      if (code) fetchBacktest();
+    }, [strategy]);
+
+    /* ================= 数据转换 ================= */
+
+    const dates = data.map(d => d.date);
+
+    const klineData = data.map(d => [d.open, d.close, d.low, d.high]);
+    const equity = data.map(d => d.equity);
+    const maxDD = equity.length ? calcMaxDrawdown(equity) : 0;
+    const sharpe = equity.length ? calcSharpeRatio(equity) : 0;
+    const totalReturn = equity.length ? calcTotalReturn(equity) : 0;
+
+
+    const buyPoints = data
+      .map((d, i) => (d.signal === 1 ? [i, d.low] : null))
+      .filter(Boolean);
+
+    const sellPoints = data
+      .map((d, i) => (d.signal === -1 ? [i, d.high] : null))
+      .filter(Boolean);
+
+    /* ================= K线图 + 买卖点 ================= */
+
+    const klineOption = {
+      tooltip: { trigger: "axis" },
+
+      dataZoom: [
+        { type: "inside", start: 70, end: 100 },
+        { show: true, type: "slider", start: 70, end: 100 }
+      ],
+
+      xAxis: { type: "category", data: dates },
+      yAxis: { scale: true },
+
+      series: [
+        {
+          type: "candlestick",
+          data: klineData
+        },
+        {
+          name: "Buy",
+          type: "scatter",
+          data: buyPoints,
+          symbol: "triangle",
+          symbolSize: 18,
+          itemStyle: { color: "#16a34a" }
+        },
+        {
+          name: "Sell",
+          type: "scatter",
+          data: sellPoints,
+          symbol: "triangle",
+          symbolRotate: 180,
+          symbolSize: 18,
+          itemStyle: { color: "#dc2626" }
+        }
+      ]
+    };
+
+
+    /* ================= 收益曲线 ================= */
+
+    const equityOption = {
+      tooltip: { trigger: "axis" },
+      xAxis: { type: "category", data: dates },
+      yAxis: { type: "value" },
+      series: [
+        {
+          name: "策略资金曲线",
+          type: "line",
+          smooth: true,
+          data: equity
+        }
+      ]
+    };
+
+    function calcMaxDrawdown(equity) {
+      let peak = equity[0];
+      let maxDD = 0;
+
+      for (let i = 0; i < equity.length; i++) {
+        if (equity[i] > peak) peak = equity[i];
+        const drawdown = (peak - equity[i]) / peak;
+        if (drawdown > maxDD) maxDD = drawdown;
+      }
+
+      return maxDD;
+    }
+
+    function calcDailyReturns(equity) {
+      let returns = [];
+      for (let i = 1; i < equity.length; i++) {
+        returns.push((equity[i] - equity[i-1]) / equity[i-1]);
+      }
+      return returns;
+    }
+
+    function calcSharpeRatio(equity) {
+      const returns = calcDailyReturns(equity);
+      const mean = returns.reduce((a,b)=>a+b,0) / returns.length;
+
+      const std = Math.sqrt(
+        returns.map(r => (r - mean) ** 2).reduce((a,b)=>a+b,0) / returns.length
+      );
+
+      const sharpe = (mean / std) * Math.sqrt(252);
+      return sharpe;
+    }
+
+    function calcTotalReturn(equity) {
+      return (equity[equity.length-1] / equity[0]) - 1;
+    }
+
+
+
+
+    /* ================= UI ================= */
+
+    return (
+      <div>
+        <BackBtn />
+
+        {/* ===== ① 策略选择区 ===== */}
+        <Card className="p-6 mb-6 shadow-xl rounded-2xl">
+          <h2 className="text-2xl font-bold mb-4">⚙️ 策略选择</h2>
+
+          <div className="flex gap-4 items-center">
+            <Card className="p-6 mb-6 shadow-xl rounded-2xl">
+              <h2 className="text-2xl font-bold mb-4">⚙️ 选择回测策略</h2>
+
+              <div className="grid grid-cols-5 gap-4">
+                {strategies.map((s) => (
+                  <Card
+                    key={s.value}
+                    onClick={() => setStrategy(s.value)}
+                    className={`cursor-pointer p-4 border-2 transition-all 
+                    ${strategy === s.value ? "border-blue-500 shadow-xl" : ""}`}
+                  >
+                    <h3 className="font-semibold">{s.name}</h3>
+                    <p className="text-xs text-gray-500 mt-2">{s.desc}</p>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="mt-6 flex gap-4 items-center">
+                <Button onClick={fetchBacktest}>
+                  运行回测
+                </Button>
+                {loading && <span>回测中...</span>}
+              </div>
+            </Card>
+
+          </div>
+
+          <p className="text-gray-500 mt-4">
+            策略说明：当产生买卖信号时在K线图中显示 ▲ ▼
+          </p>
+        </Card>
+
+        {/* ===== ② K线图 ===== */}
+        <Card className="p-6 mb-6 shadow-xl rounded-2xl">
+          <h2 className="text-xl font-bold mb-4">📈 买卖点回测</h2>
+          <ReactECharts option={klineOption} style={{ height: 400 }} />
+        </Card>
+
+        {/* ===== ③ 收益曲线 ===== */}
+        <Card className="p-6 shadow-xl rounded-2xl">
+          <h2 className="text-xl font-bold mb-4">💰 策略收益曲线(初始资金10000)</h2>
+
+          {/* 指标卡片 */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <Card className="p-4 text-center">
+              <p className="text-gray-500 text-sm">总收益率</p>
+              <p className="text-2xl font-bold">
+                {(totalReturn * 100).toFixed(2)}%
+              </p>
+            </Card>
+
+            <Card className="p-4 text-center">
+              <p className="text-gray-500 text-sm">最大回撤</p>
+              <p className="text-2xl font-bold text-red-500">
+                {(maxDD * 100).toFixed(2)}%
+              </p>
+            </Card>
+
+            <Card className="p-4 text-center">
+              <p className="text-gray-500 text-sm">夏普比率</p>
+              <p className="text-2xl font-bold text-green-600">
+                {sharpe.toFixed(2)}
+              </p>
+            </Card>
+          </div>
+
+  <ReactECharts option={equityOption} style={{ height: 350 }} />
+</Card>
+
+      </div>
+    );
+  };
+
+
+  /* ===================== AI分析界面 ===================== */
   const AIPage = () => (
     <div>
       <BackBtn />
@@ -252,6 +491,7 @@ export default function StockDashboard() {
     </div>
   );
 
+  /* ===================== 财报分析界面 ===================== */
   const ReportPage = () => (
     <div>
       <BackBtn />
@@ -263,7 +503,7 @@ export default function StockDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 p-10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50  to-slate-200 p-10">
       <div className="max-w-5xl mx-auto">
         <Header code={code} setCode={setCode} setPage={setPage} />
 
