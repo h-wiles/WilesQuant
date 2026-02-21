@@ -22,6 +22,7 @@ class ExitPoint:
             # ===== 无持仓 → 看是否买入 =====
             if position == 0 and signal == 1:
                 entry_price = price
+                position = 1
 
             if position > 0:
                 pnl = (price - entry_price) / entry_price
