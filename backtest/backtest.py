@@ -1,18 +1,41 @@
 import matplotlib.pyplot as plt
 from .get_entry_point import EntryPoint
+from .get_exit_point import ExitPoint
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 
+def signal_clean(signal):
+    """对入场出场信号进行处理，防止出现重复买入和重复卖出的情况"""
+    result = []
+    first_nonzero_seen = False
+    last_nonzero = 0
+    for s in signal:
+        if s == 0:
+            result.append(0)
+            continue
+        if not first_nonzero_seen:
+            if s == 1:
+                first_nonzero_seen = True
+                result.append(1)
+                last_nonzero = 1
+            else:
+                result.append(0)
+            continue
 
-def backtest_tp_sl(df, price_col='close', signal_col='signal',
-                   initial_cash=10000, tp=0.02, sl=0.01):
+        if s == last_nonzero:
+            result.append(0)
+        else:
+            result.append(s)
+            last_nonzero = s
+
+    return result
+
+
+def get_trade_performance(df, price_col='close', signal_col='signal',
+                          initial_cash=10000):
     """
-    带止盈止损的回测, 无手续费
-
-    signal: 1=买入信号
-    tp: 止盈比例 (0.02 = 2%)
-    sl: 止损比例 (0.01 = 1%)
+    获取入场出场策略等收益率等
     """
 
     df = df.copy()
@@ -20,8 +43,10 @@ def backtest_tp_sl(df, price_col='close', signal_col='signal',
 
     cash = initial_cash
     position = 0  # 持仓股数
-    entry_price = 0  # 买入价
     equity_curve = []
+
+    signal = df[signal_col].tolist()
+    df[signal_col] = signal_clean(signal)
 
     for i in range(n):
         price = df.loc[i, price_col]
@@ -29,22 +54,15 @@ def backtest_tp_sl(df, price_col='close', signal_col='signal',
 
         # ===== 无持仓 → 看是否买入 =====
         if position == 0 and signal == 1:
-            position = cash // price        # 购买股数
             entry_price = price
-            cash = cash - position * price      # 剩余资金
+            position = cash // entry_price        # 购买股数
+            cash = cash - position * entry_price      # 剩余资金
 
         # ===== 已持仓 → 检查止盈止损 =====
-        if position > 0:
-            pnl = (price - entry_price) / entry_price
-
-            if pnl >= tp or pnl <= -sl:
-                if pnl > 0:
-                    cash += position * entry_price * (1 + tp)
-                else:
-                    cash += position * entry_price * (1 - sl)
-                position = 0
-                entry_price = 0
-                df.loc[i, signal_col] = -1
+        if position > 0 and signal == -1:
+            exit_price = price
+            cash += position * exit_price
+            position = 0
 
         # ===== 计算每日资产 =====
         equity = cash + position * price
@@ -56,28 +74,34 @@ def backtest_tp_sl(df, price_col='close', signal_col='signal',
     return df
 
 
-def main_backtest(code, strategy, plot_equity_curve=True):
-    ep = EntryPoint(code)
-    if strategy == "ma5_diverge":
-        entry_df = ep.ma5_diverge_entry()
-    elif strategy == "kdj_oversold":
-        entry_df = ep.kdj_oversold_entry()
-    elif strategy == "macd_golden_cross":
-        entry_df = ep.macd_golden_cross_entry()
-    elif strategy == "macd_bullish_divergence":
-        entry_df = ep.macd_bullish_divergence_entry()
-    elif strategy == "volume_breakout":
-        entry_df = ep.volume_breakout_entry()
+def main_backtest(code, entry_strategy, exit_strategy, plot_equity_curve=True):
+    enp = EntryPoint(code)
+    exp = ExitPoint(code)
+    if entry_strategy == "ma5_diverge":
+        entry_df = enp.ma5_diverge_entry()
+    elif entry_strategy == "kdj_oversold":
+        entry_df = enp.kdj_oversold_entry()
+    elif entry_strategy == "macd_golden_cross":
+        entry_df = enp.macd_golden_cross_entry()
+    elif entry_strategy == "macd_bullish_divergence":
+        entry_df = enp.macd_bullish_divergence_entry()
+    elif entry_strategy == "volume_breakout":
+        entry_df = enp.volume_breakout_entry()
     else:
-        raise ValueError("strategy not supported")
+        raise ValueError("entry_strategy not supported")
 
-    res = backtest_tp_sl(entry_df, price_col="close", signal_col="signal")
+    if exit_strategy == "fix_tp_sl":
+        exit_df = exp.fixed_tp_sl(entry_df)
+    else:
+        raise ValueError("exit_strategy not supported")
+
+    res = get_trade_performance(exit_df, price_col="close", signal_col="signal")
     res = res.fillna(0)
 
     if plot_equity_curve:
         plt.figure(figsize=(10, 5))
         plt.plot(pd.to_datetime(res["date"]), res['cum_return'])
-        plt.title("Equity Curve (TP 2% / SL 1%)")
+        plt.title("Equity Curve")
         plt.ylabel("Return")
         plt.show()
 
@@ -85,5 +109,6 @@ def main_backtest(code, strategy, plot_equity_curve=True):
 
 
 if __name__ == '__main__':
-    response = main_backtest("sh.600004", strategy="ma5 diverge")
+    response = main_backtest("sh.600004", entry_strategy="ma5 diverge",
+                             exit_strategy="fix_tp_sl")
     print(response)
