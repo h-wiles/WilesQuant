@@ -101,7 +101,7 @@ def main_backtest(code, entry_strategy, exit_strategy, plot_equity_curve=True):
     if plot_equity_curve:
         plt.figure(figsize=(10, 5))
         plt.plot(pd.to_datetime(res["date"]), res['cum_return'])
-        plt.title("Equity Curve")
+        plt.title("Total Return Curve")
         plt.ylabel("Return")
         plt.show()
 
