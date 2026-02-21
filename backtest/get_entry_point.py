@@ -4,6 +4,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 class EntryPoint:
+    """获取入场（买入）点"""
     def __init__(self, code, signal_col="signal"):
         self.df = pd.read_csv(f"./data/price_data/{code}.csv")
         self.signal_col = signal_col
