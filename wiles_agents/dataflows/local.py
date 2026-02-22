@@ -8,74 +8,19 @@ import json
 from .reddit_utils import fetch_top_from_category
 from tqdm import tqdm
 
-def get_YFin_data_window(
-    symbol: Annotated[str, "ticker symbol of the company"],
-    curr_date: Annotated[str, "Start date in yyyy-mm-dd format"],
-    look_back_days: Annotated[int, "how many days to look back"],
-) -> str:
-    # calculate past days
-    date_obj = datetime.strptime(curr_date, "%Y-%m-%d")
-    before = date_obj - relativedelta(days=look_back_days)
-    start_date = before.strftime("%Y-%m-%d")
 
-    # read in data
-    data = pd.read_csv(
-        os.path.join(
-            DATA_DIR,
-            f"market_data/price_data/{symbol}-YFin-data-2015-01-01-2025-03-25.csv",
-        )
-    )
-
-    # Extract just the date part for comparison
-    data["DateOnly"] = data["Date"].str[:10]
-
-    # Filter data between the start and end dates (inclusive)
-    filtered_data = data[
-        (data["DateOnly"] >= start_date) & (data["DateOnly"] <= curr_date)
-    ]
-
-    # Drop the temporary column we created
-    filtered_data = filtered_data.drop("DateOnly", axis=1)
-
-    # Set pandas display options to show the full DataFrame
-    with pd.option_context(
-        "display.max_rows", None, "display.max_columns", None, "display.width", None
-    ):
-        df_string = filtered_data.to_string()
-
-    return (
-        f"## Raw Market Data for {symbol} from {start_date} to {curr_date}:\n\n"
-        + df_string
-    )
-
-def get_YFin_data(
+def get_local_data(
     symbol: Annotated[str, "ticker symbol of the company"],
     start_date: Annotated[str, "Start date in yyyy-mm-dd format"],
     end_date: Annotated[str, "End date in yyyy-mm-dd format"],
 ) -> str:
     # read in data
-    data = pd.read_csv(
-        os.path.join(
-            DATA_DIR,
-            f"market_data/price_data/{symbol}-YFin-data-2015-01-01-2025-03-25.csv",
-        )
-    )
-
-    if end_date > "2025-03-25":
-        raise Exception(
-            f"Get_YFin_Data: {end_date} is outside of the data range of 2015-01-01 to 2025-03-25"
-        )
-
-    # Extract just the date part for comparison
-    data["DateOnly"] = data["Date"].str[:10]
+    data = pd.read_csv(f"../../data/price_data/{symbol}.csv")[["date", "open", "high", "low", "close", "volume"]]
 
     # Filter data between the start and end dates (inclusive)
     filtered_data = data[
-        (data["DateOnly"] >= start_date) & (data["DateOnly"] <= end_date)
+        (data["date"] >= start_date) & (data["date"] <= end_date)
     ]
-
-    # Drop the temporary column we created
-    filtered_data = filtered_data.drop("DateOnly", axis=1)
 
     # remove the index from the dataframe
     filtered_data = filtered_data.reset_index(drop=True)
@@ -364,112 +309,3 @@ def get_simfin_income_statements(
         + "\n\nThis includes metadata like reporting dates and currency, share details, and a comprehensive breakdown of the company's financial performance. Starting with Revenue, it shows Cost of Revenue and resulting Gross Profit. Operating Expenses are detailed, including SG&A, R&D, and Depreciation. The statement then shows Operating Income, followed by non-operating items and Interest Expense, leading to Pretax Income. After accounting for Income Tax and any Extraordinary items, it concludes with Net Income, representing the company's bottom-line profit or loss for the period."
     )
 
-
-def get_reddit_global_news(
-    curr_date: Annotated[str, "Current date in yyyy-mm-dd format"],
-    look_back_days: Annotated[int, "Number of days to look back"] = 7,
-    limit: Annotated[int, "Maximum number of articles to return"] = 5,
-) -> str:
-    """
-    Retrieve the latest top reddit news
-    Args:
-        curr_date: Current date in yyyy-mm-dd format
-        look_back_days: Number of days to look back (default 7)
-        limit: Maximum number of articles to return (default 5)
-    Returns:
-        str: A formatted string containing the latest news articles posts on reddit
-    """
-
-    curr_date_dt = datetime.strptime(curr_date, "%Y-%m-%d")
-    before = curr_date_dt - relativedelta(days=look_back_days)
-    before = before.strftime("%Y-%m-%d")
-
-    posts = []
-    # iterate from before to curr_date
-    curr_iter_date = datetime.strptime(before, "%Y-%m-%d")
-
-    total_iterations = (curr_date_dt - curr_iter_date).days + 1
-    pbar = tqdm(desc=f"Getting Global News on {curr_date}", total=total_iterations)
-
-    while curr_iter_date <= curr_date_dt:
-        curr_date_str = curr_iter_date.strftime("%Y-%m-%d")
-        fetch_result = fetch_top_from_category(
-            "global_news",
-            curr_date_str,
-            limit,
-            data_path=os.path.join(DATA_DIR, "reddit_data"),
-        )
-        posts.extend(fetch_result)
-        curr_iter_date += relativedelta(days=1)
-        pbar.update(1)
-
-    pbar.close()
-
-    if len(posts) == 0:
-        return ""
-
-    news_str = ""
-    for post in posts:
-        if post["content"] == "":
-            news_str += f"### {post['title']}\n\n"
-        else:
-            news_str += f"### {post['title']}\n\n{post['content']}\n\n"
-
-    return f"## Global News Reddit, from {before} to {curr_date}:\n{news_str}"
-
-
-def get_reddit_company_news(
-    query: Annotated[str, "Search query or ticker symbol"],
-    start_date: Annotated[str, "Start date in yyyy-mm-dd format"],
-    end_date: Annotated[str, "End date in yyyy-mm-dd format"],
-) -> str:
-    """
-    Retrieve the latest top reddit news
-    Args:
-        query: Search query or ticker symbol
-        start_date: Start date in yyyy-mm-dd format
-        end_date: End date in yyyy-mm-dd format
-    Returns:
-        str: A formatted string containing news articles posts on reddit
-    """
-
-    start_date_dt = datetime.strptime(start_date, "%Y-%m-%d")
-    end_date_dt = datetime.strptime(end_date, "%Y-%m-%d")
-
-    posts = []
-    # iterate from start_date to end_date
-    curr_date = start_date_dt
-
-    total_iterations = (end_date_dt - curr_date).days + 1
-    pbar = tqdm(
-        desc=f"Getting Company News for {query} from {start_date} to {end_date}",
-        total=total_iterations,
-    )
-
-    while curr_date <= end_date_dt:
-        curr_date_str = curr_date.strftime("%Y-%m-%d")
-        fetch_result = fetch_top_from_category(
-            "company_news",
-            curr_date_str,
-            10,  # max limit per day
-            query,
-            data_path=os.path.join(DATA_DIR, "reddit_data"),
-        )
-        posts.extend(fetch_result)
-        curr_date += relativedelta(days=1)
-
-        pbar.update(1)
-
-    pbar.close()
-
-    if len(posts) == 0:
-        return ""
-
-    news_str = ""
-    for post in posts:
-        if post["content"] == "":
-            news_str += f"### {post['title']}\n\n"
-        else:
-            news_str += f"### {post['title']}\n\n{post['content']}\n\n"
-
-    return f"##{query} News Reddit, from {start_date} to {end_date}:\n\n{news_str}"

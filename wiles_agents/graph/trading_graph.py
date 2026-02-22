@@ -5,11 +5,7 @@ from pathlib import Path
 import json
 from datetime import date
 from typing import Dict, Any, Tuple, List, Optional
-
 from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
-from langchain_google_genai import ChatGoogleGenerativeAI
-
 from langgraph.prebuilt import ToolNode
 from wiles_agents.llm_adapters.deepseek_adapter import ChatDeepSeek
 from wiles_agents.agents import *
@@ -73,16 +69,7 @@ class TradingAgentsGraph:
         )
 
         # Initialize LLMs
-        if self.config["llm_provider"].lower() == "openai" or self.config["llm_provider"] == "ollama" or self.config["llm_provider"] == "openrouter":
-            self.deep_thinking_llm = ChatOpenAI(model=self.config["deep_think_llm"], base_url=self.config["backend_url"])
-            self.quick_thinking_llm = ChatOpenAI(model=self.config["quick_think_llm"], base_url=self.config["backend_url"])
-        elif self.config["llm_provider"].lower() == "anthropic":
-            self.deep_thinking_llm = ChatAnthropic(model=self.config["deep_think_llm"], base_url=self.config["backend_url"])
-            self.quick_thinking_llm = ChatAnthropic(model=self.config["quick_think_llm"], base_url=self.config["backend_url"])
-        elif self.config["llm_provider"].lower() == "google":
-            self.deep_thinking_llm = ChatGoogleGenerativeAI(model=self.config["deep_think_llm"])
-            self.quick_thinking_llm = ChatGoogleGenerativeAI(model=self.config["quick_think_llm"])
-        elif self.config["llm_provider"].lower()=="deepseek":
+        if self.config["llm_provider"].lower()=="deepseek":
             self.deep_thinking_llm = ChatDeepSeek(model=self.config["deep_think_llm"],api_key=os.getenv("DEEPSEEK_API_KEY"),base_url=self.config["backend_url"],
                                                   temperature=0.7,max_tokens=4000,timeout=60)
             self.quick_thinking_llm = ChatDeepSeek(model=self.config["quick_think_llm"], api_key=os.getenv("DEEPSEEK_API_KEY"), base_url=self.config["backend_url"],

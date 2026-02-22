@@ -4,7 +4,10 @@ from typing_extensions import TypedDict, Optional
 from langchain_openai import ChatOpenAI
 from wiles_agents.agents import *
 from langgraph.prebuilt import ToolNode
-from langgraph.graph import END, StateGraph, START, MessagesState
+from langgraph.graph import END, StateGraph, START
+from langgraph.graph import MessagesState
+from langchain_core.messages import AnyMessage
+from langgraph.graph.message import add_messages
 
 
 # Researcher team state

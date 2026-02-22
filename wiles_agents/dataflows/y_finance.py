@@ -11,54 +11,6 @@ proxy = 'http://127.0.0.1:7897' # 代理设置，此处修改
 os.environ['HTTP_PROXY'] = proxy
 os.environ['HTTPS_PROXY'] = proxy
 
-def get_YFin_data_online(
-    symbol: Annotated[str, "ticker symbol of the company"],
-    start_date: Annotated[str, "Start date in yyyy-mm-dd format"],
-    end_date: Annotated[str, "End date in yyyy-mm-dd format"],
-):
-
-    data = pd.DataFrame()
-    n = 0
-
-    datetime.strptime(start_date, "%Y-%m-%d")
-    datetime.strptime(end_date, "%Y-%m-%d")
-
-    # Create ticker object
-    ticker = yf.Ticker(symbol.upper())
-
-    # Fetch historical data for the specified date range
-    while len(data) == 0 and n <= 2:
-        # Fetch historical data for the specified date range
-        data = ticker.history(start=start_date, end=end_date)
-        n += 1
-        time.sleep(2)
-
-    # Check if data is empty
-    if data.empty:
-        return (
-            f"No data found for symbol '{symbol}' between {start_date} and {end_date}"
-        )
-
-    # Remove timezone info from index for cleaner output
-    if data.index.tz is not None:
-        data.index = data.index.tz_localize(None)
-
-    # Round numerical values to 2 decimal places for cleaner display
-    numeric_columns = ["Open", "High", "Low", "Close", "Adj Close"]
-    for col in numeric_columns:
-        if col in data.columns:
-            data[col] = data[col].round(2)
-
-    # Convert DataFrame to CSV string
-    csv_string = data.to_csv()
-
-    # Add header information
-    header = f"# Stock data for {symbol.upper()} from {start_date} to {end_date}\n"
-    header += f"# Total records: {len(data)}\n"
-    header += f"# Data retrieved on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-
-    return header + csv_string
-
 def get_stock_stats_indicators_window(
     symbol: Annotated[str, "ticker symbol of the company"],
     indicator: Annotated[str, "technical indicator to get the analysis and report of"],
@@ -231,19 +183,19 @@ def _get_stock_stats_bulk(
         # Online data fetching with caching
         today_date = pd.Timestamp.today()
         curr_date_dt = pd.to_datetime(curr_date)
-        
+
         end_date = today_date
         start_date = today_date - pd.DateOffset(years=15)
         start_date_str = start_date.strftime("%Y-%m-%d")
         end_date_str = end_date.strftime("%Y-%m-%d")
-        
+
         os.makedirs(config["data_cache_dir"], exist_ok=True)
-        
+
         data_file = os.path.join(
             config["data_cache_dir"],
             f"{symbol}-YFin-data-{start_date_str}-{end_date_str}.csv",
         )
-        
+
         if os.path.exists(data_file):
             data = pd.read_csv(data_file)
             data["Date"] = pd.to_datetime(data["Date"])
@@ -258,7 +210,7 @@ def _get_stock_stats_bulk(
             )
             data = data.reset_index()
             data.to_csv(data_file, index=False)
-        
+
         df = wrap(data)
         df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
     
