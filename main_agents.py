@@ -1,9 +1,14 @@
 from wiles_agents.graph.trading_graph import TradingAgentsGraph
 from wiles_agents.default_config import DEFAULT_CONFIG
 from dotenv import load_dotenv
+import os
+import warnings
+warnings.filterwarnings("ignore")
 
 # Load environment variables from .env file
 load_dotenv()
+os.environ["http_proxy"] = "http://127.0.0.1:7890"
+os.environ["https_proxy"] = "http://127.0.0.1:7890"
 
 # Create a custom config
 config = DEFAULT_CONFIG.copy()
@@ -23,7 +28,7 @@ config["data_vendors"] = {
 ta = TradingAgentsGraph(debug=True, config=config)
 
 # forward propagate
-_, decision = ta.propagate("NVDA", "2026-01-17")
+_, decision = ta.propagate("sh.600004", "2026-01-17")
 print(decision)
 
 # Memorize mistakes and reflect
