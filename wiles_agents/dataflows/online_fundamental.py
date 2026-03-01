@@ -42,7 +42,7 @@ def get_valuation_data(code, curr_date):
 def get_profit_data(code, curr_date):
     # 查询季频估值指标盈利能力
     profit_list = []
-    year, quarter = curr_date.split("-")[0], 1+int(curr_date.split("-")[1]) // 3
+    year, quarter = curr_date.split("-")[0], 1+(int(curr_date.split("-")[1])-1) // 3
     rs_profit = bs.query_profit_data(code=code, year=year, quarter=quarter)
     while (rs_profit.error_code == '0') & rs_profit.next():
         profit_list.append(rs_profit.get_row_data())
@@ -62,7 +62,7 @@ def get_profit_data(code, curr_date):
 
 def get_growth_data(code, curr_date):
     growth_list = []
-    year, quarter = curr_date.split("-")[0], 1+int(curr_date.split("-")[1]) // 3
+    year, quarter = curr_date.split("-")[0], 1+(int(curr_date.split("-")[1])-1) // 3
     rs_growth = bs.query_growth_data(code=code, year=year, quarter=quarter)
     while (rs_growth.error_code == '0') & rs_growth.next():
         growth_list.append(rs_growth.get_row_data())
@@ -81,7 +81,7 @@ def get_growth_data(code, curr_date):
 def get_balance_data(code, curr_date):
     # 偿债能力
     balance_list = []
-    year, quarter = curr_date.split("-")[0], 1+int(curr_date.split("-")[1]) // 3
+    year, quarter = curr_date.split("-")[0], 1+(int(curr_date.split("-")[1])-1) // 3
     rs_balance = bs.query_balance_data(code=code, year=year, quarter=quarter)
     while (rs_balance.error_code == '0') & rs_balance.next():
         balance_list.append(rs_balance.get_row_data())
