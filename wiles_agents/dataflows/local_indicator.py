@@ -170,12 +170,7 @@ def _get_stock_stats_bulk(
     if not online:
         # Local data path
         try:
-            data = pd.read_csv(
-                os.path.join(
-                    config.get("data_cache_dir", "data"),
-                    f"{symbol}-YFin-data-2015-01-01-2025-03-25.csv",
-                )
-            )
+            data = pd.read_csv(f"./data/price_data/{symbol}.csv")
             df = wrap(data)
         except FileNotFoundError:
             raise Exception("Stockstats fail: Yahoo Finance data not fetched yet!")
@@ -213,14 +208,13 @@ def _get_stock_stats_bulk(
 
         df = wrap(data)
         df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
-    
-    # Calculate the indicator for all rows at once
-    df[indicator]  # This triggers stockstats to calculate the indicator
+
+    df[indicator]  # Calculate the indicator for all rows at once
     
     # Create a dictionary mapping date strings to indicator values
     result_dict = {}
     for _, row in df.iterrows():
-        date_str = row["Date"]
+        date_str = row.name
         indicator_value = row[indicator]
         
         # Handle NaN/None values
