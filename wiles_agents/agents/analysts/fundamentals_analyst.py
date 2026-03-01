@@ -13,9 +13,9 @@ def create_fundamentals_analyst(llm):
 
         tools = [
             get_fundamentals,
-            get_balance_sheet,
-            get_cashflow,
-            get_income_statement,
+            # get_balance_sheet,
+            # get_cashflow,
+            # get_income_statement,
         ]
 
         system_message = (
