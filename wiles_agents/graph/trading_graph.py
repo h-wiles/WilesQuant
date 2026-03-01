@@ -27,7 +27,6 @@ from wiles_agents.agents.utils.agent_utils import (
     get_cashflow,
     get_income_statement,
     get_news,
-    get_insider_sentiment,
     get_insider_transactions,
     get_global_news
 )
@@ -44,10 +43,10 @@ class TradingAgentsGraph:
     """Main class that orchestrates the trading agents framework."""
 
     def __init__(
-        self,
-        selected_analysts=["market", "social", "news", "fundamentals"],
-        debug=False,
-        config: Dict[str, Any] = None,
+            self,
+            selected_analysts=["market", "social", "news", "fundamentals"],
+            debug=False,
+            config: Dict[str, Any] = None,
     ):
         """Initialize the trading agents graph and components.
 
@@ -69,14 +68,18 @@ class TradingAgentsGraph:
         )
 
         # Initialize LLMs
-        if self.config["llm_provider"].lower()=="deepseek":
-            self.deep_thinking_llm = ChatDeepSeek(model=self.config["deep_think_llm"],api_key=os.getenv("DEEPSEEK_API_KEY"),base_url=self.config["backend_url"],
-                                                  temperature=0.7,max_tokens=4000,timeout=60)
-            self.quick_thinking_llm = ChatDeepSeek(model=self.config["quick_think_llm"], api_key=os.getenv("DEEPSEEK_API_KEY"), base_url=self.config["backend_url"],
+        if self.config["llm_provider"].lower() == "deepseek":
+            self.deep_thinking_llm = ChatDeepSeek(model=self.config["deep_think_llm"],
+                                                  api_key=os.getenv("DEEPSEEK_API_KEY"),
+                                                  base_url=self.config["backend_url"],
                                                   temperature=0.7, max_tokens=4000, timeout=60)
+            self.quick_thinking_llm = ChatDeepSeek(model=self.config["quick_think_llm"],
+                                                   api_key=os.getenv("DEEPSEEK_API_KEY"),
+                                                   base_url=self.config["backend_url"],
+                                                   temperature=0.7, max_tokens=4000, timeout=60)
         else:
             raise ValueError(f"Unsupported LLM provider: {self.config['llm_provider']}")
-        
+
         # Initialize memories
         self.bull_memory = FinancialSituationMemory("bull_memory", self.config)
         self.bear_memory = FinancialSituationMemory("bear_memory", self.config)
@@ -134,18 +137,16 @@ class TradingAgentsGraph:
                 [
                     # News and insider information
                     get_news,
-                    get_global_news,
-                    get_insider_sentiment,
-                    get_insider_transactions,
+                    get_global_news
                 ]
             ),
             "fundamentals": ToolNode(
                 [
                     # Fundamental analysis tools
                     get_fundamentals,
-                    get_balance_sheet,
-                    get_cashflow,
-                    get_income_statement,
+                    # get_balance_sheet,
+                    # get_cashflow,
+                    # get_income_statement,
                 ]
             ),
         }
@@ -222,8 +223,8 @@ class TradingAgentsGraph:
         directory.mkdir(parents=True, exist_ok=True)
 
         with open(
-            f"eval_results/{self.ticker}/TradingAgentsStrategy_logs/full_states_log_{trade_date}.json",
-            "w",
+                f"eval_results/{self.ticker}/TradingAgentsStrategy_logs/full_states_log_{trade_date}.json",
+                "w",
         ) as f:
             json.dump(self.log_states_dict, f, indent=4)
 
