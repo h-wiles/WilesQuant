@@ -1,23 +1,11 @@
-from typing import Annotated
-
-# Import from vendor-specific modules
-from .local import get_local_data, get_finnhub_news, get_finnhub_company_insider_sentiment, get_finnhub_company_insider_transactions, get_simfin_balance_sheet, get_simfin_cashflow, get_simfin_income_statements
-from .y_finance import get_stock_stats_indicators_window, get_balance_sheet as get_yfinance_balance_sheet, get_cashflow as get_yfinance_cashflow, get_income_statement as get_yfinance_income_statement, get_insider_transactions as get_yfinance_insider_transactions
-from .google import get_google_news
-from .openai import get_stock_news_openai, get_global_news_openai, get_fundamentals_openai
-from .alpha_vantage import (
-    get_fundamentals as get_alpha_vantage_fundamentals,
-    get_balance_sheet as get_alpha_vantage_balance_sheet,
-    get_cashflow as get_alpha_vantage_cashflow,
-    get_income_statement as get_alpha_vantage_income_statement,
-    get_insider_transactions as get_alpha_vantage_insider_transactions,
-    get_news as get_alpha_vantage_news
-)
-from .alpha_vantage_common import AlphaVantageRateLimitError
-
-# Configuration and routing logic
+from .local_data import get_local_data
+from .local_indicator import get_stock_stats_indicators_window
+from .online_fundamental import get_stock_fundamental
+from .online_stock_news import get_stock_news
+from .online_global_news import get_global_news
 from .config import get_config
 import time
+from .alpha_vantage_common import AlphaVantageRateLimitError
 
 # Tools organized by category
 TOOLS_CATEGORIES = {
@@ -68,48 +56,36 @@ VENDOR_METHODS = {
     },
     # technical_indicators
     "get_indicators": {
-        "yfinance": get_stock_stats_indicators_window,
         "local": get_stock_stats_indicators_window
-    },
-    # fundamental_data
-    "get_fundamentals": {
-        "alpha_vantage": get_alpha_vantage_fundamentals,
-        "openai": get_fundamentals_openai,
-    },
-    "get_balance_sheet": {
-        "alpha_vantage": get_alpha_vantage_balance_sheet,
-        "yfinance": get_yfinance_balance_sheet,
-        "local": get_simfin_balance_sheet,
-    },
-    "get_cashflow": {
-        "alpha_vantage": get_alpha_vantage_cashflow,
-        "yfinance": get_yfinance_cashflow,
-        "local": get_simfin_cashflow,
-    },
-    "get_income_statement": {
-        "alpha_vantage": get_alpha_vantage_income_statement,
-        "yfinance": get_yfinance_income_statement,
-        "local": get_simfin_income_statements,
     },
     # news_data
     "get_news": {
-        "alpha_vantage": get_alpha_vantage_news,
-        "openai": get_stock_news_openai,
-        "google": get_google_news,
-        "local": [get_finnhub_news, get_google_news],
+        "akshare": get_stock_news
     },
+    # fundamental_data
+    "get_fundamentals": {
+        "baostock": get_stock_fundamental,
+    },
+    # "get_balance_sheet": {
+    #     "alpha_vantage": get_alpha_vantage_balance_sheet,
+    #     "yfinance": get_yfinance_balance_sheet,
+    #     "local": get_simfin_balance_sheet,
+    # },
+    # "get_cashflow": {
+    #     "alpha_vantage": get_alpha_vantage_cashflow,
+    #     "yfinance": get_yfinance_cashflow,
+    #     "local": get_simfin_cashflow,
+    # },
+    # "get_income_statement": {
+    #     "alpha_vantage": get_alpha_vantage_income_statement,
+    #     "yfinance": get_yfinance_income_statement,
+    #     "local": get_simfin_income_statements,
+    # },
     "get_global_news": {
-        "openai": get_global_news_openai
-    },
-    "get_insider_sentiment": {
-        "local": get_finnhub_company_insider_sentiment
-    },
-    "get_insider_transactions": {
-        "alpha_vantage": get_alpha_vantage_insider_transactions,
-        "yfinance": get_yfinance_insider_transactions,
-        "local": get_finnhub_company_insider_transactions,
-    },
+        "alpha_vantage": get_global_news
+    }
 }
+
 
 def get_category_for_method(method: str) -> str:
     """Get the category that contains the specified method."""
@@ -117,6 +93,7 @@ def get_category_for_method(method: str) -> str:
         if method in info["tools"]:
             return category
     raise ValueError(f"Method '{method}' not found in any category")
+
 
 def get_vendor(category: str, method: str = None) -> str:
     """Get the configured vendor for a data category or specific tool method.
@@ -133,6 +110,7 @@ def get_vendor(category: str, method: str = None) -> str:
     # Fall back to category-level configuration
     return config.get("data_vendors", {}).get(category, "default")
 
+
 def route_to_vendor(method: str, *args, **kwargs):
     """Route method calls to appropriate vendor implementation with fallback support."""
     category = get_category_for_method(method)
@@ -146,7 +124,7 @@ def route_to_vendor(method: str, *args, **kwargs):
 
     # Get all available vendors for this method for fallback
     all_available_vendors = list(VENDOR_METHODS[method].keys())
-    
+
     # Create fallback vendor list: primary vendors first, then remaining vendors as fallbacks
     fallback_vendors = primary_vendors.copy()
     for vendor in all_available_vendors:
@@ -198,13 +176,14 @@ def route_to_vendor(method: str, *args, **kwargs):
                 print(f"DEBUG: Calling {impl_func.__name__} from vendor '{vendor_name}'...")
                 result = impl_func(*args, **kwargs)
 
-                with open("./tools.log", "a") as f:
-                    f.write(f"=========================tools输出结果验证{impl_func}, {vendor_name}==================================\n")
+                with open("./logs/tools.log", "a") as f:
+                    f.write(
+                        f"=========================tools输出结果验证{impl_func}, {vendor_name}==================================\n")
                     f.write(result)
 
                 vendor_results.append(result)
                 print(f"SUCCESS: {impl_func.__name__} from vendor '{vendor_name}' completed successfully")
-                    
+
             except AlphaVantageRateLimitError as e:
                 if vendor == "alpha_vantage":
                     print(f"RATE_LIMIT: Alpha Vantage rate limit exceeded, falling back to next available vendor")
@@ -222,7 +201,7 @@ def route_to_vendor(method: str, *args, **kwargs):
             successful_vendor = vendor
             result_summary = f"Got {len(vendor_results)} result(s)"
             print(f"SUCCESS: Vendor '{vendor}' succeeded - {result_summary}")
-            
+
             # Stopping logic: Stop after first successful vendor for single-vendor configs
             # Multiple vendor configs (comma-separated) may want to collect from multiple sources
             if len(primary_vendors) == 1:
@@ -236,7 +215,8 @@ def route_to_vendor(method: str, *args, **kwargs):
         print(f"FAILURE: All {vendor_attempt_count} vendor attempts failed for method '{method}'")
         raise RuntimeError(f"All vendor implementations failed for method '{method}'")
     else:
-        print(f"FINAL: Method '{method}' completed with {len(results)} result(s) from {vendor_attempt_count} vendor attempt(s)")
+        print(
+            f"FINAL: Method '{method}' completed with {len(results)} result(s) from {vendor_attempt_count} vendor attempt(s)")
 
     # Return single result if only one, otherwise concatenate as string
     if len(results) == 1:
