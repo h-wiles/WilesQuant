@@ -41,12 +41,6 @@ TOOLS_CATEGORIES = {
     }
 }
 
-VENDOR_LIST = [
-    "local",
-    "yfinance",
-    "openai",
-    "google"
-]
 
 # Mapping of methods to their vendor-specific implementations
 VENDOR_METHODS = {
