@@ -5,20 +5,20 @@ from wiles_agents.dataflows.interface import route_to_vendor
 @tool
 def get_news(
     ticker: Annotated[str, "Ticker symbol"],
-    start_date: Annotated[str, "Start date in yyyy-mm-dd format"],
-    end_date: Annotated[str, "End date in yyyy-mm-dd format"],
+    curr_date: Annotated[str, "Start date in yyyy-mm-dd format"],
+    look_back_days: Annotated[int, "Number of days to look back"] = 7,
 ) -> str:
     """
     Retrieve news data for a given ticker symbol.
     Uses the configured news_data vendor.
     Args:
         ticker (str): Ticker symbol
-        start_date (str): Start date in yyyy-mm-dd format
-        end_date (str): End date in yyyy-mm-dd format
+        curr_date (str): Current date in yyyy-mm-dd format
+        look_back_days (str): Number of days to look back (default 7)
     Returns:
         str: A formatted string containing news data
     """
-    return route_to_vendor("get_news", ticker, start_date, end_date)
+    return route_to_vendor("get_news", ticker, curr_date, look_back_days)
 
 @tool
 def get_global_news(
