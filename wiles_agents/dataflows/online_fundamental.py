@@ -43,37 +43,43 @@ def get_profit_data(code, curr_date):
     # 查询季频估值指标盈利能力
     profit_list = []
     year, quarter = curr_date.split("-")[0], 1+(int(curr_date.split("-")[1])-1) // 3
-    rs_profit = bs.query_profit_data(code=code, year=year, quarter=quarter)
-    while (rs_profit.error_code == '0') & rs_profit.next():
-        profit_list.append(rs_profit.get_row_data())
-    result_profit = pd.DataFrame(profit_list, columns=rs_profit.fields)
-
     result = defaultdict(str)
-    result["roeAvg"] = result_profit["roeAvg"].iloc[0]     # 净资产收益率(平均)(%)
-    result["npMargin"] = result_profit["npMargin"].iloc[0]    # 销售净利率(%)
-    result["gpMargin"] = result_profit["gpMargin"].iloc[0]     # 销售毛利率(%)
-    result["netProfit"] = result_profit["netProfit"].iloc[0]     # 净利润(元)
-    result["epsTTM"] = result_profit["epsTTM"].iloc[0]         # 每股收益
-    result["MBRevenue"] = result_profit["MBRevenue"].iloc[0]        # 主营营业收入(元)
-    result["totalShare"] = result_profit["totalShare"].iloc[0]        # 总股本 
-    result["liqaShare"] = result_profit["liqaShare"].iloc[0]         # 流通股本
+    try:
+        rs_profit = bs.query_profit_data(code=code, year=year, quarter=quarter)
+        while (rs_profit.error_code == '0') & rs_profit.next():
+            profit_list.append(rs_profit.get_row_data())
+        result_profit = pd.DataFrame(profit_list, columns=rs_profit.fields)
 
+        result["roeAvg"] = result_profit["roeAvg"].iloc[0]     # 净资产收益率(平均)(%)
+        result["npMargin"] = result_profit["npMargin"].iloc[0]    # 销售净利率(%)
+        result["gpMargin"] = result_profit["gpMargin"].iloc[0]     # 销售毛利率(%)
+        result["netProfit"] = result_profit["netProfit"].iloc[0]     # 净利润(元)
+        result["epsTTM"] = result_profit["epsTTM"].iloc[0]         # 每股收益
+        result["MBRevenue"] = result_profit["MBRevenue"].iloc[0]        # 主营营业收入(元)
+        result["totalShare"] = result_profit["totalShare"].iloc[0]        # 总股本
+        result["liqaShare"] = result_profit["liqaShare"].iloc[0]         # 流通股本
+    except Exception as e:
+        pass
     return result
+
 
 def get_growth_data(code, curr_date):
     growth_list = []
     year, quarter = curr_date.split("-")[0], 1+(int(curr_date.split("-")[1])-1) // 3
-    rs_growth = bs.query_growth_data(code=code, year=year, quarter=quarter)
-    while (rs_growth.error_code == '0') & rs_growth.next():
-        growth_list.append(rs_growth.get_row_data())
-    result_growth = pd.DataFrame(growth_list, columns=rs_growth.fields)
-
     result = defaultdict(str)
-    result["YOYEquity"] = result_growth["YOYEquity"].iloc[0]        # 净资产同比增长率
-    result["YOYAsset"] = result_growth["YOYAsset"].iloc[0]         # 总资产同比增长率
-    result["YOYNI"] = result_growth["YOYNI"].iloc[0]            # 净利润同比增长率
-    result["YOYEPSBasic"] = result_growth["YOYEPSBasic"].iloc[0]            # 基本每股收益同比增长率
-    result["YOYPNI"] = result_growth["YOYPNI"].iloc[0]         # 归属母公司股东净利润同比增长率
+    try:
+        rs_growth = bs.query_growth_data(code=code, year=year, quarter=quarter)
+        while (rs_growth.error_code == '0') & rs_growth.next():
+            growth_list.append(rs_growth.get_row_data())
+        result_growth = pd.DataFrame(growth_list, columns=rs_growth.fields)
+
+        result["YOYEquity"] = result_growth["YOYEquity"].iloc[0]        # 净资产同比增长率
+        result["YOYAsset"] = result_growth["YOYAsset"].iloc[0]         # 总资产同比增长率
+        result["YOYNI"] = result_growth["YOYNI"].iloc[0]            # 净利润同比增长率
+        result["YOYEPSBasic"] = result_growth["YOYEPSBasic"].iloc[0]            # 基本每股收益同比增长率
+        result["YOYPNI"] = result_growth["YOYPNI"].iloc[0]         # 归属母公司股东净利润同比增长率
+    except Exception as e:
+        pass
 
     return result
 
@@ -82,17 +88,20 @@ def get_balance_data(code, curr_date):
     # 偿债能力
     balance_list = []
     year, quarter = curr_date.split("-")[0], 1+(int(curr_date.split("-")[1])-1) // 3
-    rs_balance = bs.query_balance_data(code=code, year=year, quarter=quarter)
-    while (rs_balance.error_code == '0') & rs_balance.next():
-        balance_list.append(rs_balance.get_row_data())
-    result_balance = pd.DataFrame(balance_list, columns=rs_balance.fields)
-
     result = defaultdict(str)
-    result["currentRatio"] = result_balance["currentRatio"].iloc[0]      # 流动比率
-    result["quickRatio"] = result_balance["quickRatio"].iloc[0]        # 速动比率
-    result["cashRatio"] = result_balance["cashRatio"].iloc[0]         # 现金比率
-    result["YOYLiability"] = result_balance["YOYLiability"].iloc[0]      # 总负债同比增长率
-    result["liabilityToAsset"] = result_balance["liabilityToAsset"].iloc[0]           # 资产负债率
+    try:
+        rs_balance = bs.query_balance_data(code=code, year=year, quarter=quarter)
+        while (rs_balance.error_code == '0') & rs_balance.next():
+            balance_list.append(rs_balance.get_row_data())
+        result_balance = pd.DataFrame(balance_list, columns=rs_balance.fields)
+
+        result["currentRatio"] = result_balance["currentRatio"].iloc[0]      # 流动比率
+        result["quickRatio"] = result_balance["quickRatio"].iloc[0]        # 速动比率
+        result["cashRatio"] = result_balance["cashRatio"].iloc[0]         # 现金比率
+        result["YOYLiability"] = result_balance["YOYLiability"].iloc[0]      # 总负债同比增长率
+        result["liabilityToAsset"] = result_balance["liabilityToAsset"].iloc[0]           # 资产负债率
+    except Exception as e:
+        pass
     return result
 
 
@@ -165,3 +174,9 @@ def get_stock_fundamental(code: str, curr_date) -> str:
     bs.logout()
 
     return report
+
+if __name__ == '__main__':
+    bs.login()
+    res = get_balance_data("sh.600004", curr_date="2025-01-15")
+    bs.logout()
+    print(res)
