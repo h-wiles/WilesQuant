@@ -2,6 +2,27 @@ import baostock as bs
 import pandas as pd
 from collections import defaultdict
 
+
+def subtract_quarter(year: int, quarter: int, n: int = 1):
+    """
+    减去 n 个季度
+    参数:
+        year (int): 年份
+        quarter (int): 当前季度 (1-4)
+        n (int): 要减去的季度数，默认 1
+
+    返回:
+        (new_year, new_quarter)
+    """
+    # 转成总季度数
+    total_quarters = int(year) * 4 + (quarter - 1)
+
+    total_quarters -= n
+    new_year = total_quarters // 4
+    new_quarter = total_quarters % 4 + 1
+
+    return new_year, new_quarter
+
 def get_industry_info(code):
     df = pd.read_csv("./data/stock_industry.csv")
     industry = df[df["code"]==code]["industry"].iloc[0]
@@ -43,9 +64,13 @@ def get_profit_data(code, curr_date):
     # 查询季频估值指标盈利能力
     profit_list = []
     year, quarter = curr_date.split("-")[0], 1+(int(curr_date.split("-")[1])-1) // 3
+    year, quarter = subtract_quarter(year, quarter, n=1)
     result = defaultdict(str)
     try:
         rs_profit = bs.query_profit_data(code=code, year=year, quarter=quarter)
+        if not rs_profit.get_row_data():
+            year, quarter = subtract_quarter(year, quarter, n=1)
+            rs_profit = bs.query_profit_data(code=code, year=year, quarter=quarter)
         while (rs_profit.error_code == '0') & rs_profit.next():
             profit_list.append(rs_profit.get_row_data())
         result_profit = pd.DataFrame(profit_list, columns=rs_profit.fields)
@@ -66,9 +91,13 @@ def get_profit_data(code, curr_date):
 def get_growth_data(code, curr_date):
     growth_list = []
     year, quarter = curr_date.split("-")[0], 1+(int(curr_date.split("-")[1])-1) // 3
+    year, quarter = subtract_quarter(year, quarter, n=1)
     result = defaultdict(str)
     try:
         rs_growth = bs.query_growth_data(code=code, year=year, quarter=quarter)
+        if not rs_growth.get_row_data():
+            year, quarter = subtract_quarter(year, quarter, n=1)
+            rs_growth = bs.query_growth_data(code=code, year=year, quarter=quarter)
         while (rs_growth.error_code == '0') & rs_growth.next():
             growth_list.append(rs_growth.get_row_data())
         result_growth = pd.DataFrame(growth_list, columns=rs_growth.fields)
@@ -88,9 +117,13 @@ def get_balance_data(code, curr_date):
     # 偿债能力
     balance_list = []
     year, quarter = curr_date.split("-")[0], 1+(int(curr_date.split("-")[1])-1) // 3
+    year, quarter = subtract_quarter(year, quarter, n=1)
     result = defaultdict(str)
     try:
         rs_balance = bs.query_balance_data(code=code, year=year, quarter=quarter)
+        if not rs_balance.get_row_data():
+            year, quarter = subtract_quarter(year, quarter, n=1)
+            rs_balance = bs.query_balance_data(code=code, year=year, quarter=quarter)
         while (rs_balance.error_code == '0') & rs_balance.next():
             balance_list.append(rs_balance.get_row_data())
         result_balance = pd.DataFrame(balance_list, columns=rs_balance.fields)
@@ -177,6 +210,6 @@ def get_stock_fundamental(code: str, curr_date) -> str:
 
 if __name__ == '__main__':
     bs.login()
-    res = get_balance_data("sh.600004", curr_date="2025-01-15")
+    res = get_profit_data("sh.600004", curr_date="2026-01-15")
     bs.logout()
     print(res)
