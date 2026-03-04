@@ -74,7 +74,7 @@ def update_data(basic_data_path = "../data/price_data"):
 # 每天19:00执行数据更新,使用工具：crontab，用crontab -e查看
 if __name__ == '__main__':
     # 如果基础数据存在
-    if os.path.exists("./data/price_data") and os.listdir(os.path.abspath("./data/price_data")):
+    if os.path.exists("../data/price_data") and os.listdir(os.path.abspath("../data/price_data")):
         update_data(basic_data_path = "../data/price_data")
     # 如果基础数据不存在
     else:
