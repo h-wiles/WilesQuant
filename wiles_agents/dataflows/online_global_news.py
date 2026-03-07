@@ -1,3 +1,4 @@
+import json
 from .alpha_vantage_common import _make_api_request, format_datetime_for_api
 
 
@@ -28,4 +29,15 @@ def get_global_news(curr_date, look_back_days: int = 7, limit: int = 50):
         "limit": str(limit),
     }
 
-    return _make_api_request("NEWS_SENTIMENT", params)
+    news = _make_api_request("NEWS_SENTIMENT", params)
+    feeds = json.loads(news)["feed"]
+    result = [{k: d[k] for k in ["title", "url", "time_published", "summary"]} for d in feeds]
+
+    return str(result)
+
+
+if __name__ == '__main__':
+    import os
+    os.environ['ANTHROPIC_API_KEY'] = 'xxxx'
+    res = get_global_news(curr_date="2025-03-01")
+    print(res)
