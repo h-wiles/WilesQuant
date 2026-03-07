@@ -19,6 +19,9 @@ from wiles_agents.agents.utils.news_data_tools import (
     get_insider_transactions,
     get_global_news
 )
+from wiles_agents.agents.utils.social_data_tools import (
+get_social
+)
 
 def create_msg_delete():
     def delete_messages(state):
