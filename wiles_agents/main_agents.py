@@ -11,8 +11,10 @@ warnings.filterwarnings("ignore")
 
 # Load environment variables from .env file
 load_dotenv()
-os.environ["http_proxy"] = "http://127.0.0.1:7890"
-os.environ["https_proxy"] = "http://127.0.0.1:7890"
+# os.environ["http_proxy"] = "http://127.0.0.1:7890"
+# os.environ["https_proxy"] = "http://127.0.0.1:7890"
+os.environ["HTTP_PROXY"] = ""
+os.environ["HTTPS_PROXY"] = ""
 
 # Create a custom config
 config = DEFAULT_CONFIG.copy()
@@ -40,7 +42,7 @@ calendar = trade_calendar[(trade_calendar["trade_date"]<=pd.to_datetime(trade_da
 trade_date = str(calendar["trade_date"].iloc[-1])[:10]
 
 # forward propagate
-_, decision = ta.propagate(code, trade_date)
+state, decision = ta.propagate(code, trade_date)
 print(decision)
 
 # Memorize mistakes and reflect
