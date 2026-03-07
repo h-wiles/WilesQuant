@@ -10,7 +10,8 @@ import akshare as ak
 warnings.filterwarnings("ignore")
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv("../.env")
+config = DEFAULT_CONFIG
 # os.environ["http_proxy"] = "http://127.0.0.1:7890"
 # os.environ["https_proxy"] = "http://127.0.0.1:7890"
 os.environ["HTTP_PROXY"] = ""
