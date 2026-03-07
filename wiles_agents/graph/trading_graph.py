@@ -28,7 +28,8 @@ from wiles_agents.agents.utils.agent_utils import (
     get_income_statement,
     get_news,
     get_insider_transactions,
-    get_global_news
+    get_global_news,
+    get_social
 )
 
 from .conditional_logic import ConditionalLogic
@@ -130,7 +131,7 @@ class TradingAgentsGraph:
             "social": ToolNode(
                 [
                     # News tools for social media analysis
-                    get_news,
+                    get_social,
                 ]
             ),
             "news": ToolNode(
