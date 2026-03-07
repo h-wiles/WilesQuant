@@ -83,6 +83,3 @@ def get_stock_news(
 {chr(10).join(result_data)}
         """
     return combined_result
-
-if __name__ == '__main__':
-    print(get_stock_news("sh.600004", "2026-01-01"))

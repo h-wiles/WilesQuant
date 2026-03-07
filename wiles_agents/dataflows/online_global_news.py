@@ -34,10 +34,3 @@ def get_global_news(curr_date, look_back_days: int = 7, limit: int = 50):
     result = [{k: d[k] for k in ["title", "url", "time_published", "summary"]} for d in feeds]
 
     return str(result)
-
-
-if __name__ == '__main__':
-    import os
-    os.environ['ANTHROPIC_API_KEY'] = 'xxxx'
-    res = get_global_news(curr_date="2025-03-01")
-    print(res)

@@ -207,9 +207,3 @@ def get_stock_fundamental(code: str, curr_date) -> str:
     bs.logout()
 
     return report
-
-if __name__ == '__main__':
-    bs.login()
-    res = get_stock_fundamental("sh.600004", curr_date="2026-01-15")
-    bs.logout()
-    print(res)
