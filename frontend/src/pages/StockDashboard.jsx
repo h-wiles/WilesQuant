@@ -236,10 +236,14 @@ export default function StockDashboard() {
 
   /* ===================== 量化策略界面 ===================== */
   const StrategyPage = () => {
+
     const [data, setData] = useState([]);
-    const [strategy, setStrategy] = useState("ma");
+    const [entryStrategy, setEntryStrategy] = useState("ma5_diverge");
+    const [exitStrategy, setExitStrategy] = useState("fix_tp_sl");
     const [loading, setLoading] = useState(false);
-    const strategies = [
+
+    /* ================= 入场策略 ================= */
+    const entryStrategies = [
       {
         value: "ma5_diverge",
         name: "MA5 乖离策略",
@@ -267,11 +271,23 @@ export default function StockDashboard() {
       }
     ];
 
+    /* ================= 出场策略 ================= */
+    const exitStrategies = [
+      {
+        value: "fix_tp_sl",
+        name: "2%止盈 + 1%止损",
+        desc: "固定比例止盈止损"
+      }
+    ];
 
     /* ================= 拉取回测数据 ================= */
     const fetchBacktest = async () => {
       setLoading(true);
-      const res = await fetch(`http://127.0.0.1:8000/api/backtest?code=${code}&strategy=${strategy}`);
+
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/backtest?code=${code}&entry_strategy=${entryStrategy}&exit_strategy=${exitStrategy}`
+      );
+
       const json = await res.json();
       setData(json);
       setLoading(false);
@@ -279,18 +295,17 @@ export default function StockDashboard() {
 
     useEffect(() => {
       if (code) fetchBacktest();
-    }, [strategy]);
+    }, [entryStrategy, exitStrategy]);
 
     /* ================= 数据转换 ================= */
 
     const dates = data.map(d => d.date);
-
     const klineData = data.map(d => [d.open, d.close, d.low, d.high]);
     const equity = data.map(d => d.equity);
+
     const maxDD = equity.length ? calcMaxDrawdown(equity) : 0;
     const sharpe = equity.length ? calcSharpeRatio(equity) : 0;
     const totalReturn = equity.length ? calcTotalReturn(equity) : 0;
-
 
     const buyPoints = data
       .map((d, i) => (d.signal === 1 ? [i, d.low] : null))
@@ -300,19 +315,16 @@ export default function StockDashboard() {
       .map((d, i) => (d.signal === -1 ? [i, d.high] : null))
       .filter(Boolean);
 
-    /* ================= K线图 + 买卖点 ================= */
+    /* ================= K线图 ================= */
 
     const klineOption = {
       tooltip: { trigger: "axis" },
-
       dataZoom: [
         { type: "inside", start: 70, end: 100 },
         { show: true, type: "slider", start: 70, end: 100 }
       ],
-
       xAxis: { type: "category", data: dates },
       yAxis: { scale: true },
-
       series: [
         {
           type: "candlestick",
@@ -337,7 +349,6 @@ export default function StockDashboard() {
         }
       ]
     };
-
 
     /* ================= 收益曲线 ================= */
 
@@ -392,63 +403,66 @@ export default function StockDashboard() {
       return (equity[equity.length-1] / equity[0]) - 1;
     }
 
-
-
-
     /* ================= UI ================= */
-
     return (
       <div>
         <BackBtn />
 
-        {/* ===== ① 策略选择区 ===== */}
         <Card className="p-6 mb-6 shadow-xl rounded-2xl">
-          <h2 className="text-2xl font-bold mb-4">⚙️ 策略选择</h2>
 
-          <div className="flex gap-4 items-center">
-            <Card className="p-6 mb-6 shadow-xl rounded-2xl">
-              <h2 className="text-2xl font-bold mb-4">⚙️ 选择回测策略</h2>
+          <h2 className="text-2xl font-bold mb-6">⚙️ 策略选择</h2>
 
-              <div className="grid grid-cols-5 gap-4">
-                {strategies.map((s) => (
-                  <Card
-                    key={s.value}
-                    onClick={() => setStrategy(s.value)}
-                    className={`cursor-pointer p-4 border-2 transition-all 
-                    ${strategy === s.value ? "border-blue-500 shadow-xl" : ""}`}
-                  >
-                    <h3 className="font-semibold">{s.name}</h3>
-                    <p className="text-xs text-gray-500 mt-2">{s.desc}</p>
-                  </Card>
-                ))}
-              </div>
-
-              <div className="mt-6 flex gap-4 items-center">
-                <Button onClick={fetchBacktest}>
-                  运行回测
-                </Button>
-                {loading && <span>回测中...</span>}
-              </div>
-            </Card>
-
+          {/* ===== 入场策略 ===== */}
+          <h3 className="text-xl font-semibold mb-4">📥 选择入场策略</h3>
+          <div className="grid grid-cols-5 gap-4 mb-8">
+            {entryStrategies.map((s) => (
+              <Card
+                key={s.value}
+                onClick={() => setEntryStrategy(s.value)}
+                className={`cursor-pointer p-4 border-2 transition-all 
+                ${entryStrategy === s.value ? "border-blue-500 shadow-xl" : ""}`}
+              >
+                <h3 className="font-semibold">{s.name}</h3>
+                <p className="text-xs text-gray-500 mt-2">{s.desc}</p>
+              </Card>
+            ))}
           </div>
 
-          <p className="text-gray-500 mt-4">
-            策略说明：当产生买卖信号时在K线图中显示 ▲ ▼
-          </p>
+          {/* ===== 出场策略 ===== */}
+          <h3 className="text-xl font-semibold mb-4">📤 选择出场策略</h3>
+          <div className="grid grid-cols-5 gap-4 mb-8">
+            {exitStrategies.map((s) => (
+              <Card
+                key={s.value}
+                onClick={() => setExitStrategy(s.value)}
+                className={`cursor-pointer p-4 border-2 transition-all 
+                ${exitStrategy === s.value ? "border-blue-500 shadow-xl" : ""}`}
+              >
+                <h3 className="font-semibold">{s.name}</h3>
+                <p className="text-xs text-gray-500 mt-2">{s.desc}</p>
+              </Card>
+            ))}
+          </div>
+
+          <div className="flex gap-4 items-center">
+            <Button onClick={fetchBacktest}>
+              运行回测
+            </Button>
+            {loading && <span>回测中...</span>}
+          </div>
+
         </Card>
 
-        {/* ===== ② K线图 ===== */}
+        {/* ===== K线图 ===== */}
         <Card className="p-6 mb-6 shadow-xl rounded-2xl">
           <h2 className="text-xl font-bold mb-4">📈 买卖点回测</h2>
           <ReactECharts option={klineOption} style={{ height: 400 }} />
         </Card>
 
-        {/* ===== ③ 收益曲线 ===== */}
+        {/* ===== 收益曲线 ===== */}
         <Card className="p-6 shadow-xl rounded-2xl">
           <h2 className="text-xl font-bold mb-4">💰 策略收益曲线(初始资金10000)</h2>
 
-          {/* 指标卡片 */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <Card className="p-4 text-center">
               <p className="text-gray-500 text-sm">总收益率</p>
@@ -472,8 +486,8 @@ export default function StockDashboard() {
             </Card>
           </div>
 
-  <ReactECharts option={equityOption} style={{ height: 350 }} />
-</Card>
+          <ReactECharts option={equityOption} style={{ height: 350 }} />
+        </Card>
 
       </div>
     );
@@ -511,7 +525,7 @@ export default function StockDashboard() {
           <div className="grid grid-cols-4 gap-6">
             <OptionCard title="K线图" value="kline" icon={LineChart} desc="查看行情" />
             <OptionCard title="量化策略" value="strategy" icon={BarChart2} desc="策略回测" />
-            <OptionCard title="AI分析" value="ai" icon={BrainCircuit} desc="AI建议" />
+            <OptionCard title="AI分析" value="ai" icon={BrainCircuit} desc="muti-agents建议" />
             <OptionCard title="财报分析" value="report" icon={FileText} desc="基本面" />
           </div>
         )}
