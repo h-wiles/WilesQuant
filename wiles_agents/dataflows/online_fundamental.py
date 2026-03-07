@@ -38,7 +38,7 @@ def get_industry_info(code):
 
     result["industry_analysis"] = industry_analysis
     result["code_name"] = code_name
-    return industry
+    return result
 
 
 def get_valuation_data(code, curr_date):
@@ -84,7 +84,7 @@ def get_profit_data(code, curr_date):
         result["totalShare"] = result_profit["totalShare"].iloc[0]        # 总股本
         result["liqaShare"] = result_profit["liqaShare"].iloc[0]         # 流通股本
     except Exception as e:
-        pass
+        print(e)
     return result
 
 
@@ -134,7 +134,7 @@ def get_balance_data(code, curr_date):
         result["YOYLiability"] = result_balance["YOYLiability"].iloc[0]      # 总负债同比增长率
         result["liabilityToAsset"] = result_balance["liabilityToAsset"].iloc[0]           # 资产负债率
     except Exception as e:
-        pass
+        print(e)
     return result
 
 
@@ -149,7 +149,7 @@ def get_stock_fundamental(code: str, curr_date) -> str:
     profit_data = get_profit_data(code, curr_date)
     growth_data = get_growth_data(code, curr_date)
     balance_data = get_balance_data(code, curr_date)
-    price_data = pd.read_csv(f"../../data/price_data/{code}.csv")
+    price_data = pd.read_csv(f"./data/price_data/{code}.csv")
 
     company_name = industry_info.get("code_name", "N/A")
     current_price = price_data["close"].iloc[-1]
@@ -170,7 +170,7 @@ def get_stock_fundamental(code: str, curr_date) -> str:
     ## 💰 财务数据分析
     
     ### 估值指标
-    - **总市值**: {current_price * profit_data.get("totalShare")}
+    - **总市值**: {current_price * float(profit_data.get("totalShare"))}
     - **滚动市盈率(PE_TTM)**: {valuation_data.get('peTTM', 'N/A')}
     - **市净率(PB)**: {valuation_data.get('pbMRQ', 'N/A')}
     - **滚动市销率(PS_TTM)**: {valuation_data.get('psTTM', 'N/A')}
@@ -210,6 +210,6 @@ def get_stock_fundamental(code: str, curr_date) -> str:
 
 if __name__ == '__main__':
     bs.login()
-    res = get_profit_data("sh.600004", curr_date="2026-01-15")
+    res = get_stock_fundamental("sh.600004", curr_date="2026-01-15")
     bs.logout()
     print(res)
