@@ -3,6 +3,7 @@ from .local_indicator import get_stock_stats_indicators_window
 from .online_fundamental import get_stock_fundamental
 from .online_stock_news import get_stock_news
 from .online_global_news import get_global_news
+from .online_social import get_stock_social
 from .config import get_config
 import time
 from .alpha_vantage_common import AlphaVantageRateLimitError
@@ -25,18 +26,19 @@ TOOLS_CATEGORIES = {
         "description": "Company fundamentals",
         "tools": [
             "get_fundamentals",
-            "get_balance_sheet",
-            "get_cashflow",
-            "get_income_statement"
         ]
     },
     "news_data": {
-        "description": "News (public/insiders, original/processed)",
+        "description": "News (original/processed)",
         "tools": [
             "get_news",
             "get_global_news",
-            "get_insider_sentiment",
-            "get_insider_transactions",
+        ]
+    },
+    "social_data": {
+        "description": "Social comments and sentiment",
+        "tools": [
+             "get_social",
         ]
     }
 }
@@ -59,6 +61,9 @@ VENDOR_METHODS = {
     # fundamental_data
     "get_fundamentals": {
         "baostock": get_stock_fundamental,
+    },
+    "get_social":{
+        "online": get_stock_social
     },
     # "get_balance_sheet": {
     #     "alpha_vantage": get_alpha_vantage_balance_sheet,
