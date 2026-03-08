@@ -16,10 +16,13 @@
     "echarts": "^6.0.0",
     "echarts-for-react": "^3.0.6",
     "framer-motion": "^12.34.0",
+    "github-markdown-css": "^5.9.0",
     "lightweight-charts": "^5.1.0",
     "lucide-react": "^0.570.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.4.1",
     "tailwindcss-animate": "^1.0.7"
   },
