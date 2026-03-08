@@ -67,9 +67,11 @@ The backend focuses on strategy implementation and backtesting, while the fronte
 
 ## 🚀 Getting Started
 ```text
-cd WilesQuantt
+cd WilesQuant
 python -m uvicorn main:app --reload     # 启动后端API
-打开 html文件
+
+cd frontend
+npm run dev     # 启动前端api
 ```
 
 ## 📝 notion
