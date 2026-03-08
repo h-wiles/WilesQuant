@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LineChart, BarChart2, BrainCircuit, FileText } from "lucide-react";
 import { motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import "github-markdown-css/github-markdown.css";
 
 const Header = ({ code, setCode, setPage }) => (
   <div className="text-center mb-8">
@@ -29,12 +32,6 @@ export default function StockDashboard() {
   const [page, setPage] = useState(null);
 
   // ===== 策略状态 =====
-  const [strategy, setStrategy] = useState("ma");
-  const [params, setParams] = useState({
-    short: 5,
-    long: 20,
-  });
-
 
   const OptionCard = ({ title, icon: Icon, value, desc }) => (
     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
@@ -495,15 +492,172 @@ export default function StockDashboard() {
 
 
   /* ===================== AI分析界面 ===================== */
-  const AIPage = () => (
-    <div>
-      <BackBtn />
-      <Card className="p-8 shadow-xl rounded-2xl">
-        <h2 className="text-2xl font-bold mb-4">🤖 AI 智能分析</h2>
-        <p className="text-gray-600">AI 自动生成投资建议</p>
-      </Card>
-    </div>
-  );
+  const AIPage = () => {
+
+    const [analysis, setAnalysis] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    const [open, setOpen] = useState({
+      fundamentals: true,
+      technical: false,
+      news: false,
+      plan: false,
+      decision: true
+    });
+
+    const code = "sh.600004";
+    const [tradeDate, setTradeDate] = useState("2026-03-06");
+
+    const toggle = (key) => {
+      setOpen(prev => ({
+        ...prev,
+        [key]: !prev[key]
+      }));
+    };
+
+    /* ================= 获取AI分析 ================= */
+
+    const fetchAIAnalysis = async () => {
+
+      setLoading(true);
+
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/ai_analysis?code=${code}&trade_date=${tradeDate}`
+      );
+
+      const json = await res.json();
+
+      setAnalysis(json);
+
+      setLoading(false);
+    };
+
+    useEffect(() => {
+      fetchAIAnalysis();
+    }, []);
+
+    if (loading) {
+      return (
+        <div>
+          <BackBtn />
+          <Card className="p-8 shadow-xl rounded-2xl">
+            <p>AI分析生成中...</p>
+          </Card>
+        </div>
+      );
+    }
+
+    if (!analysis) return null;
+
+    const modules = [
+      {
+        key: "fundamentals",
+        title: "📊 基本面分析",
+        content: analysis.fundamentals_report
+      },
+      {
+        key: "technical",
+        title: "📈 技术面分析",
+        content: analysis.market_report
+      },
+      {
+        key: "news",
+        title: "📰 新闻消息面",
+        content: analysis.news_report
+      },
+      {
+        key: "plan",
+        title: "📑 交易计划",
+        content: analysis.trader_investment_plan
+      },
+      {
+        key: "decision",
+        title: "🎯 最终决策",
+        content: analysis.final_trade_decision
+      }
+    ];
+
+    return (
+      <div>
+        <BackBtn />
+        {/* 标题 */}
+        <Card className="p-8 mb-6 shadow-xl rounded-2xl">
+          <h2 className="text-2xl font-bold mb-2">
+            🤖 AI 智能分析
+            <span className="ml-3 text-blue-600">
+              {analysis.code} {analysis.stock_name}
+            </span>
+          </h2>
+          <p className="text-gray-600 mb-4">
+            AI 自动生成投资建议
+          </p>
+          {/* 日期输入 */}
+          <div className="flex items-center gap-4">
+            <label className="font-medium">交易日期：</label>
+            <input
+              type="date"
+              value={tradeDate}
+              onChange={(e) => setTradeDate(e.target.value)}
+              className="border rounded-lg px-3 py-2"
+            />
+            <button
+              onClick={fetchAIAnalysis}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+            >
+              重新分析
+            </button>
+          </div>
+        </Card>
+
+        {/* 模块 */}
+        <div className="grid grid-cols-1 gap-6">
+
+          {modules.map((m) => (
+
+            <Card
+              key={m.key}
+              className={`shadow-lg rounded-2xl ${
+                m.key === "decision" ? "border-2 border-blue-500" : ""
+              }`}
+            >
+
+              <div
+                className="flex justify-between items-center p-6 cursor-pointer"
+                onClick={() => toggle(m.key)}
+              >
+                <h3 className="text-xl font-bold">{m.title}</h3>
+
+                <span className="text-gray-500 text-lg">
+                  {open[m.key] ? "▲" : "▼"}
+                </span>
+              </div>
+
+              {open[m.key] && (
+
+                <div className="p-6 pt-0">
+
+                  <div className="markdown-body bg-white rounded-xl p-4">
+
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {m.content || ""}
+                    </ReactMarkdown>
+
+                  </div>
+
+                </div>
+
+              )}
+
+            </Card>
+
+          ))}
+
+        </div>
+
+      </div>
+    );
+  };
+
 
   /* ===================== 财报分析界面 ===================== */
   const ReportPage = () => (
