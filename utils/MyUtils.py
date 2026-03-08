@@ -159,7 +159,11 @@ def get_macd_data(df, fast=12, slow=26, signal=9):
 
     return df
 
+def get_stock_name(code):
+    stock_info = pd.read_csv("./data/stock_info.csv")
+    stock_name = stock_info[stock_info["code"]==code]["code_name"].iloc[0]
+    return stock_name
 
 if __name__ == '__main__':
-    data = get_stock_baostock("sh.600004", start_date="2024-01-01", end_date="2024-01-30")
+    data = get_stock_name("sh.600004")
     print(data)
