@@ -36,6 +36,7 @@ Here are your past reflections on mistakes:
 Here is the debate:
 Debate History:
 {history}"""
+        prompt += "\nIMPORTANT: All responses must be written in Chinese."
         response = llm.invoke(prompt)
 
         new_investment_debate_state = {
