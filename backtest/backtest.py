@@ -94,6 +94,8 @@ def main_backtest(code, entry_strategy, exit_strategy, plot_equity_curve=True):
         exit_df = exp.fixed_tp_sl(entry_df)
     elif exit_strategy == "fix_hold_days":
         exit_df = exp.fix_hold_days(entry_df, hold_days=3)
+    elif exit_strategy == "kdj_overbuy":
+        exit_df = exp.kdj_oversold_buy(entry_df)
     else:
         raise ValueError("exit_strategy not supported")
 

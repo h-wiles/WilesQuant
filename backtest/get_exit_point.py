@@ -1,4 +1,5 @@
 import pandas as pd
+from utils.MyUtils import get_kdj_data
 
 class ExitPoint:
     def __init__(self, code, signal_col="signal", price_col='close'):
@@ -36,6 +37,7 @@ class ExitPoint:
         return df
 
     def fix_hold_days(self, entry_df, hold_days):
+        """持有固定天数后买出"""
         df = entry_df.copy()
         if "signal" not in df.columns:
             raise ValueError("the input df must have 'signal' column")
@@ -56,3 +58,22 @@ class ExitPoint:
                     entry_index = None
         return df
 
+    def kdj_oversold_buy(self, entry_df):
+        """kdj 超买，J>80，收盘价出场"""
+        df = entry_df.copy()
+        if "signal" not in df.columns:
+            raise ValueError("the input df must have 'signal' column")
+        df = get_kdj_data(df)
+        position = 0
+        for i in range(len(df)):
+            signal = df.loc[i, self.signal_col]
+
+            if position == 0 and signal == 1:
+                position = 1
+
+            if position == 1:
+                J = df.loc[i, "J"]
+                if J>80:
+                    df.loc[i, self.signal_col] = -1
+                    position = 0
+        return df
