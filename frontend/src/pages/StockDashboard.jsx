@@ -11,7 +11,7 @@ import "github-markdown-css/github-markdown.css";
 
 const Header = ({ code, setCode, setPage }) => (
   <div className="text-center mb-8">
-    <h1 className="text-4xl font-bold mb-3">AI 股票分析平台</h1>
+    <h1 className="text-4xl font-bold mb-3">AI 股票分析平台v1</h1>
     <p className="text-gray-500">输入股票代码，选择你想要的分析方式</p>
 
     <div className="flex justify-center gap-3 mt-6">
@@ -274,6 +274,11 @@ export default function StockDashboard() {
         value: "fix_tp_sl",
         name: "2%止盈 + 1%止损",
         desc: "固定比例止盈止损"
+      },
+      {
+        value: "fix_hold_days",
+        name: "固定持股天数3",
+        desc: "固定持股天数后出场"
       }
     ];
 
@@ -496,6 +501,7 @@ export default function StockDashboard() {
 
     const [analysis, setAnalysis] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [seconds, setSeconds] = useState(0);   // 👈 新增
 
     const [open, setOpen] = useState({
       fundamentals: true,
@@ -505,7 +511,6 @@ export default function StockDashboard() {
       decision: true
     });
 
-    const code = "sh.600004";
     const [tradeDate, setTradeDate] = useState("2026-03-06");
 
     const toggle = (key) => {
@@ -518,7 +523,7 @@ export default function StockDashboard() {
     /* ================= 获取AI分析 ================= */
 
     const fetchAIAnalysis = async () => {
-
+      setSeconds(0);   // 👈 新增
       setLoading(true);
 
       const res = await fetch(
@@ -536,12 +541,23 @@ export default function StockDashboard() {
       fetchAIAnalysis();
     }, []);
 
+    useEffect(() => {
+      if (!loading) return;
+      const timer = setInterval(() => {
+        setSeconds((prev) => prev + 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }, [loading]);
+
     if (loading) {
       return (
         <div>
           <BackBtn />
           <Card className="p-8 shadow-xl rounded-2xl">
-            <p>AI分析生成中...</p>
+            <p className="text-lg font-medium">AI分析生成中...</p>
+            <p className="text-gray-500 mt-2">
+              已等待 {seconds} 秒
+            </p>
           </Card>
         </div>
       );
@@ -583,13 +599,14 @@ export default function StockDashboard() {
         {/* 标题 */}
         <Card className="p-8 mb-6 shadow-xl rounded-2xl">
           <h2 className="text-2xl font-bold mb-2">
-            🤖 AI 智能分析
+            🤖 AI 智能分析(大概需要5min)
             <span className="ml-3 text-blue-600">
               {analysis.code} {analysis.stock_name}
             </span>
           </h2>
           <p className="text-gray-600 mb-4">
-            AI 自动生成投资建议
+            本页面底层架构基于开源项目TradingAgents(https://github.com/TauricResearch/TradingAgents)扩展开发而成，内容由 AI 基于公开信息自动生成，仅供参考，不构成任何投资建议或买卖推荐。
+            AI 分析可能存在误差或信息滞后，请投资者结合自身情况独立判断并自行承担投资风险。市场有风险，投资需谨慎。
           </p>
           {/* 日期输入 */}
           <div className="flex items-center gap-4">
