@@ -80,10 +80,3 @@ def main_agents(code, trade_date):
     state["stock_name"] = get_stock_name(code)
     state["code"] = code
     return state, decision
-
-
-if __name__ == '__main__':
-    # 日期处理，若输入未来日期，则自动替换成近一个交易日
-    code, trade_date = "sh.600004", "2026-03-06"
-    a,b = main_agents(code, trade_date)
-    print(a)
