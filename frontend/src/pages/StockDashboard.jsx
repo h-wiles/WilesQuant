@@ -11,7 +11,7 @@ import "github-markdown-css/github-markdown.css";
 
 const Header = ({ code, setCode, setPage }) => (
   <div className="text-center mb-8">
-    <h1 className="text-4xl font-bold mb-3">AI 股票分析平台v1</h1>
+    <h1 className="text-4xl font-bold mb-3">AI 股票分析平台v1.0</h1>
     <p className="text-gray-500">输入股票代码，选择你想要的分析方式</p>
 
     <div className="flex justify-center gap-3 mt-6">
@@ -279,6 +279,11 @@ export default function StockDashboard() {
         value: "fix_hold_days",
         name: "固定持股天数3",
         desc: "固定持股天数后出场"
+      },
+      {
+        value: "kdj_overbuy",
+        name: "kdj超买(J>80)",
+        desc: "kdj超买(J>80)出场"
       }
     ];
 
@@ -457,7 +462,17 @@ export default function StockDashboard() {
 
         {/* ===== K线图 ===== */}
         <Card className="p-6 mb-6 shadow-xl rounded-2xl">
-          <h2 className="text-xl font-bold mb-4">📈 买卖点回测</h2>
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-6">
+            📈 买卖点回测
+
+            <span className="flex items-center gap-2 text-sm text-gray-600">
+              <span className="text-green-600 text-lg">▲</span> 买入
+            </span>
+
+            <span className="flex items-center gap-2 text-sm text-gray-600">
+              <span className="text-red-600 text-lg">▼</span> 卖出
+            </span>
+          </h2>
           <ReactECharts option={klineOption} style={{ height: 400 }} />
         </Card>
 
