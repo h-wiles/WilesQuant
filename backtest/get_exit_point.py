@@ -34,3 +34,25 @@ class ExitPoint:
                     if df.loc[i, self.signal_col] == 0:     # 入场出场点冲突时保留入场点
                         df.loc[i, self.signal_col] = -1
         return df
+
+    def fix_hold_days(self, entry_df, hold_days):
+        df = entry_df.copy()
+        if "signal" not in df.columns:
+            raise ValueError("the input df must have 'signal' column")
+        entry_index = None
+        position = 0
+
+        for i in range(len(df)):
+            signal = df.loc[i, self.signal_col]
+
+            if position == 0 and signal == 1:
+                position = 1
+                entry_index = i
+
+            if position == 1:
+                if i - entry_index >= hold_days:
+                    df.loc[i, self.signal_col] = -1
+                    position = 0
+                    entry_index = None
+        return df
+
