@@ -163,7 +163,3 @@ def get_stock_name(code):
     stock_info = pd.read_csv("./data/stock_info.csv")
     stock_name = stock_info[stock_info["code"]==code]["code_name"].iloc[0]
     return stock_name
-
-if __name__ == '__main__':
-    data = get_stock_name("sh.600004")
-    print(data)
