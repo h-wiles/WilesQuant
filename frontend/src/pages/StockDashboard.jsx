@@ -9,22 +9,147 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "github-markdown-css/github-markdown.css";
 
-const Header = ({ code, setCode, setPage }) => (
-  <div className="text-center mb-8">
-    <h1 className="text-4xl font-bold mb-3">AI 股票分析平台v1.0</h1>
-    <p className="text-gray-500">输入股票代码，选择你想要的分析方式</p>
 
-    <div className="flex justify-center gap-3 mt-6">
-      <Input
-        placeholder="例如：sh.600004"
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        className="max-w-xs"
-      />
-      <Button onClick={() => setPage("menu")}>开始分析</Button>
+const Header = ({ code, setCode, setPage }) => {
+
+  const [updateInfo, setUpdateInfo] = useState(null);
+  const [updating, setUpdating] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const updateData = async () => {
+
+    if (!code) {
+      alert("请输入股票代码");
+      return;
+    }
+
+    setUpdating(true);
+
+    try {
+
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/get_data_day?code=${code}`
+      );
+
+      if (!res.ok) {
+        throw new Error(`HTTP错误 ${res.status}`);
+      }
+
+      const json = await res.json();
+
+      setUpdateInfo(json);
+      setOpen(true);   // 打开弹窗
+
+    } catch (err) {
+
+      setUpdateInfo({
+        message: "更新失败",
+        error: err.message
+      });
+
+      setOpen(true);
+
+    } finally {
+
+      setUpdating(false);
+
+    }
+
+  };
+
+  return (
+    <div className="text-center mb-8">
+
+      <h1 className="text-4xl font-bold mb-3">
+        AI 股票分析平台 v1.0
+      </h1>
+
+      <p className="text-gray-500">
+        输入股票代码，选择你想要的分析方式（开始分析前建议先更新数据）
+      </p>
+
+      <div className="flex justify-center gap-3 mt-6">
+
+        <Input
+          placeholder="例如：sh.600004"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          className="max-w-xs"
+        />
+
+        <Button onClick={() => setPage("menu")}>
+          开始分析
+        </Button>
+
+        <Button
+          variant="outline"
+          onClick={updateData}
+          disabled={updating}
+        >
+          {updating ? "更新中..." : "更新数据"}
+        </Button>
+
+      </div>
+
+      {/* ⭐ 自定义弹窗 */}
+      {open && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+
+          <div className="bg-white rounded-xl shadow-xl w-96 p-6">
+
+            <h2 className="text-xl font-bold mb-4">
+              📦 数据更新结果
+            </h2>
+
+            {updateInfo && (
+
+              <div className="space-y-2 text-sm">
+
+                {updateInfo.code && (
+                  <p>
+                    <span className="text-gray-500">股票代码：</span>
+                    {updateInfo.code}
+                  </p>
+                )}
+
+                <p>
+                  <span className="text-gray-500">更新信息：</span>
+                  {updateInfo.message}
+                </p>
+
+                {updateInfo.start_date && updateInfo.end_date && (
+                  <p>
+                    <span className="text-gray-500">数据区间：</span>
+                    {updateInfo.start_date} ~ {updateInfo.end_date}
+                  </p>
+                )}
+
+                {updateInfo.error && (
+                  <p className="text-red-500">
+                    错误：{updateInfo.error}
+                  </p>
+                )}
+
+              </div>
+
+            )}
+
+            <div className="flex justify-end mt-6">
+
+              <Button onClick={() => setOpen(false)}>
+                关闭
+              </Button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
     </div>
-  </div>
-);
+  );
+};
 
 
 export default function StockDashboard() {
@@ -244,7 +369,7 @@ export default function StockDashboard() {
       {
         value: "ma5_diverge",
         name: "MA5 乖离策略",
-        desc: "价格远离均线后回归，适合震荡行情"
+        desc: "价格偏离并小于5日均线5%"
       },
       {
         value: "kdj_oversold",
@@ -313,6 +438,7 @@ export default function StockDashboard() {
     const maxDD = equity.length ? calcMaxDrawdown(equity) : 0;
     const sharpe = equity.length ? calcSharpeRatio(equity) : 0;
     const totalReturn = equity.length ? calcTotalReturn(equity) : 0;
+    const cumReturns = equity.length ? calcCumReturn(equity) : [];
 
     const buyPoints = data
       .map((d, i) => (d.signal === 1 ? [i, d.low] : null))
@@ -373,6 +499,31 @@ export default function StockDashboard() {
       ]
     };
 
+    const returnOption = {
+      tooltip: {
+        trigger: "axis",
+        formatter: (params) => {
+          const v = params[0].value;
+          return `${params[0].axisValue}<br/>收益率：${v.toFixed(2)}%`;
+        }
+      },
+      xAxis: { type: "category", data: dates },
+      yAxis: {
+        type: "value",
+        axisLabel: {
+          formatter: "{value}%"
+        }
+      },
+      series: [
+        {
+          name: "累计收益率",
+          type: "line",
+          smooth: true,
+          data: cumReturns
+        }
+      ]
+    };
+
     function calcMaxDrawdown(equity) {
       let peak = equity[0];
       let maxDD = 0;
@@ -409,6 +560,12 @@ export default function StockDashboard() {
     function calcTotalReturn(equity) {
       return (equity[equity.length-1] / equity[0]) - 1;
     }
+
+    function calcCumReturn(equity) {
+      const base = equity[0];
+      return equity.map(v => (v / base - 1) * 100);
+    }
+
 
     /* ================= UI ================= */
     return (
@@ -478,7 +635,7 @@ export default function StockDashboard() {
 
         {/* ===== 收益曲线 ===== */}
         <Card className="p-6 shadow-xl rounded-2xl">
-          <h2 className="text-xl font-bold mb-4">💰 策略收益曲线(初始资金10000)</h2>
+          <h2 className="text-xl font-bold mb-4">💰 策略资金曲线(初始资金10000)</h2>
 
           <div className="grid grid-cols-3 gap-4 mb-6">
             <Card className="p-4 text-center">
@@ -504,6 +661,20 @@ export default function StockDashboard() {
           </div>
 
           <ReactECharts option={equityOption} style={{ height: 350 }} />
+        </Card>
+
+        {/* ===== 收益率曲线 ===== */}
+        <Card className="p-6 mt-6 shadow-xl rounded-2xl">
+
+          <h2 className="text-xl font-bold mb-4">
+            📊 累计收益率曲线
+          </h2>
+
+          <ReactECharts
+            option={returnOption}
+            style={{ height: 350 }}
+          />
+
         </Card>
 
       </div>
