@@ -441,11 +441,11 @@ export default function StockDashboard() {
     const cumReturns = equity.length ? calcCumReturn(equity) : [];
 
     const buyPoints = data
-      .map((d, i) => (d.signal === 1 ? [i, d.low] : null))
+      .map((d, i) => (d.signal === 1 ? [i, d.close] : null))
       .filter(Boolean);
 
     const sellPoints = data
-      .map((d, i) => (d.signal === -1 ? [i, d.high] : null))
+      .map((d, i) => (d.signal === -1 ? [i, d.close] : null))
       .filter(Boolean);
 
     /* ================= K线图 ================= */
@@ -614,6 +614,9 @@ export default function StockDashboard() {
             </Button>
             {loading && <span>回测中...</span>}
           </div>
+          <p className="text-sm text-gray-500 mt-4">
+            注：本页面入场价格与出场价格均为当日收盘价，仅用于策略回测示例。
+          </p>
 
         </Card>
 
@@ -688,6 +691,7 @@ export default function StockDashboard() {
     const [analysis, setAnalysis] = useState(null);
     const [loading, setLoading] = useState(false);
     const [seconds, setSeconds] = useState(0);   // 👈 新增
+    const [error, setError] = useState(null);
 
     const [open, setOpen] = useState({
       fundamentals: true,
@@ -709,18 +713,28 @@ export default function StockDashboard() {
     /* ================= 获取AI分析 ================= */
 
     const fetchAIAnalysis = async () => {
-      setSeconds(0);   // 👈 新增
+      setSeconds(0);
       setLoading(true);
+      setError(null);     // 清空旧错误
+      setAnalysis(null);
 
-      const res = await fetch(
-        `http://127.0.0.1:8000/api/ai_analysis?code=${code}&trade_date=${tradeDate}`
-      );
-
-      const json = await res.json();
-
-      setAnalysis(json);
-
-      setLoading(false);
+      try {
+        const res = await fetch(
+          `http://127.0.0.1:8000/api/ai_analysis?code=${code}&trade_date=${tradeDate}`
+        );
+        if (!res.ok) {
+          throw new Error(`服务器错误: ${res.status}`);
+        }
+        const json = await res.json();
+        if (json.error) {
+          throw new Error(json.error);
+        }
+        setAnalysis(json);
+      } catch (err) {
+        setError(err.message || "AI分析失败");
+      } finally {
+        setLoading(false);
+      }
     };
 
     useEffect(() => {
@@ -734,6 +748,25 @@ export default function StockDashboard() {
       }, 1000);
       return () => clearInterval(timer);
     }, [loading]);
+
+    if (error) {
+      return (
+        <div>
+          <BackBtn />
+          <Card className="p-8 shadow-xl rounded-2xl border-red-500 border-2">
+            <p className="text-lg font-bold text-red-600">AI分析失败</p>
+            <p className="text-gray-600 mt-2">{error}</p>
+
+            <button
+              onClick={fetchAIAnalysis}
+              className="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg"
+            >
+              重新尝试
+            </button>
+          </Card>
+        </div>
+      );
+    }
 
     if (loading) {
       return (
