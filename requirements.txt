@@ -36,3 +36,7 @@ stockstats>=0.5.4
 typer>=0.9.0
 rich>=13.0.0
 questionary>=2.0.1
+uvicorn
+yfinance
+akshare
+rank_bm25
