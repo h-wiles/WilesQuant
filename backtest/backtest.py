@@ -113,6 +113,6 @@ def main_backtest(code, entry_strategy, exit_strategy, plot_equity_curve=True):
 
 
 if __name__ == '__main__':
-    response = main_backtest("sh.600004", entry_strategy="ma5 diverge",
+    response = main_backtest("sh.600004", entry_strategy="ma5_diverge",
                              exit_strategy="fix_tp_sl")
     print(response)

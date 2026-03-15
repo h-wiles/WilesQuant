@@ -32,8 +32,7 @@ class ExitPoint:
                     entry_price = 0
                     position = 0
 
-                    if df.loc[i, self.signal_col] == 0:     # 入场出场点冲突时保留入场点
-                        df.loc[i, self.signal_col] = -1
+                    df.loc[i, self.signal_col] = -1
         return df
 
     def fix_hold_days(self, entry_df, hold_days):
