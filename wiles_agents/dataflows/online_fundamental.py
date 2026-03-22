@@ -68,11 +68,14 @@ def get_profit_data(code, curr_date):
     result = defaultdict(str)
     try:
         rs_profit = bs.query_profit_data(code=code, year=year, quarter=quarter)
-        if not rs_profit.get_row_data():
-            year, quarter = subtract_quarter(year, quarter, n=1)
-            rs_profit = bs.query_profit_data(code=code, year=year, quarter=quarter)
         while (rs_profit.error_code == '0') & rs_profit.next():
             profit_list.append(rs_profit.get_row_data())
+        if len(profit_list) == 0:
+            year, quarter = subtract_quarter(year, quarter, n=1)
+            rs_profit = bs.query_profit_data(code=code, year=year, quarter=quarter)
+
+            while (rs_profit.error_code == '0') and rs_profit.next():
+                profit_list.append(rs_profit.get_row_data())
         result_profit = pd.DataFrame(profit_list, columns=rs_profit.fields)
 
         result["roeAvg"] = result_profit["roeAvg"].iloc[0]     # 净资产收益率(平均)(%)
@@ -95,11 +98,15 @@ def get_growth_data(code, curr_date):
     result = defaultdict(str)
     try:
         rs_growth = bs.query_growth_data(code=code, year=year, quarter=quarter)
-        if not rs_growth.get_row_data():
-            year, quarter = subtract_quarter(year, quarter, n=1)
-            rs_growth = bs.query_growth_data(code=code, year=year, quarter=quarter)
+
         while (rs_growth.error_code == '0') & rs_growth.next():
             growth_list.append(rs_growth.get_row_data())
+        if len(growth_list) == 0:
+            year, quarter = subtract_quarter(year, quarter, n=1)
+            rs_growth = bs.query_growth_data(code=code, year=year, quarter=quarter)
+
+            while (rs_growth.error_code == '0') and rs_growth.next():
+                growth_list.append(rs_growth.get_row_data())
         result_growth = pd.DataFrame(growth_list, columns=rs_growth.fields)
 
         result["YOYEquity"] = result_growth["YOYEquity"].iloc[0]        # 净资产同比增长率
@@ -109,7 +116,6 @@ def get_growth_data(code, curr_date):
         result["YOYPNI"] = result_growth["YOYPNI"].iloc[0]         # 归属母公司股东净利润同比增长率
     except Exception as e:
         pass
-
     return result
 
 
@@ -121,11 +127,14 @@ def get_balance_data(code, curr_date):
     result = defaultdict(str)
     try:
         rs_balance = bs.query_balance_data(code=code, year=year, quarter=quarter)
-        if not rs_balance.get_row_data():
-            year, quarter = subtract_quarter(year, quarter, n=1)
-            rs_balance = bs.query_balance_data(code=code, year=year, quarter=quarter)
         while (rs_balance.error_code == '0') & rs_balance.next():
             balance_list.append(rs_balance.get_row_data())
+        if len(balance_list) == 0:
+            year, quarter = subtract_quarter(year, quarter, n=1)
+            rs_balance = bs.query_balance_data(code=code, year=year, quarter=quarter)
+
+            while (rs_balance.error_code == '0') and rs_balance.next():
+                balance_list.append(rs_balance.get_row_data())
         result_balance = pd.DataFrame(balance_list, columns=rs_balance.fields)
 
         result["currentRatio"] = result_balance["currentRatio"].iloc[0]      # 流动比率
@@ -201,7 +210,7 @@ def get_stock_fundamental(code: str, curr_date) -> str:
     ## 📈 行业分析
     
     ### 行业地位
-    {industry_info['analysis']}
+    {industry_info['industry_analysis']}
     
     """
     bs.logout()
