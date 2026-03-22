@@ -12,7 +12,7 @@ def get_stock_news(
 ) -> str:
     """
     Args:
-        ticker: 股票代码（如：000001、0700.HK、AAPL）
+        ticker: 股票代码（如：sh.000001）
         curr_date: 当前日期（格式：YYYY-MM-DD）
         look_back_days: 往前回顾的天数 (default 7)
 
@@ -38,8 +38,9 @@ def get_stock_news(
                 news_title = row.get('新闻标题', '') or row.get('标题', '')
                 news_time = row.get('发布时间', '') or row.get('时间', '')
                 news_url = row.get('新闻链接', '') or row.get('链接', '')
+                news_content = row.get('新闻内容', '') or row.get('内容', '')
 
-                news_item = f"- **{news_title}** [{news_time}]({news_url})"
+                news_item = f"- **{news_title}, {news_content}** [{news_time}]({news_url})"
                 em_news_items.append(news_item)
 
             # 添加到结果中
