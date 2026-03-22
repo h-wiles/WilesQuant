@@ -26,7 +26,7 @@ def date_normalize(trade_date: str) -> str:
 
 
 def get_agent_response(code, trade_date):
-    load_dotenv("./.env")
+    load_dotenv("./.env", override=True)
 
     # Create a custom config
     config = DEFAULT_CONFIG.copy()
