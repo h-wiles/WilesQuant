@@ -701,7 +701,7 @@ export default function StockDashboard() {
       decision: true
     });
 
-    const [tradeDate, setTradeDate] = useState("2026-03-06");
+    const [tradeDate, setTradeDate] = useState("");
 
     const toggle = (key) => {
       setOpen(prev => ({
@@ -713,6 +713,10 @@ export default function StockDashboard() {
     /* ================= 获取AI分析 ================= */
 
     const fetchAIAnalysis = async () => {
+        if (!tradeDate) {
+          setError("请先选择交易日期");
+          return;
+        }
       setSeconds(0);
       setLoading(true);
       setError(null);     // 清空旧错误
@@ -737,9 +741,7 @@ export default function StockDashboard() {
       }
     };
 
-    useEffect(() => {
-      fetchAIAnalysis();
-    }, []);
+
 
     useEffect(() => {
       if (!loading) return;
@@ -773,7 +775,7 @@ export default function StockDashboard() {
         <div>
           <BackBtn />
           <Card className="p-8 shadow-xl rounded-2xl">
-            <p className="text-lg font-medium">AI分析生成中...</p>
+            <p className="text-lg font-medium">AI分析生成中(预计时间7min)...</p>
             <p className="text-gray-500 mt-2">
               已等待 {seconds} 秒
             </p>
@@ -782,7 +784,39 @@ export default function StockDashboard() {
       );
     }
 
-    if (!analysis) return null;
+    if (!analysis) {
+      return (
+        <div>
+          <BackBtn />
+          <Card className="p-8 shadow-xl rounded-2xl">
+            <h2 className="text-2xl font-bold mb-4">
+              🤖 AI 智能分析
+            </h2>
+
+            <p className="text-gray-500 mb-6">
+              请选择交易日期并点击分析按钮
+            </p>
+
+            <div className="flex items-center gap-4">
+              <label className="font-medium">交易日期：</label>
+              <input
+                type="date"
+                value={tradeDate}
+                onChange={(e) => setTradeDate(e.target.value)}
+                className="border rounded-lg px-3 py-2"
+              />
+
+              <button
+                onClick={fetchAIAnalysis}
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+              >
+                开始分析
+              </button>
+            </div>
+          </Card>
+        </div>
+      );
+    }
 
     const modules = [
       {
@@ -818,7 +852,7 @@ export default function StockDashboard() {
         {/* 标题 */}
         <Card className="p-8 mb-6 shadow-xl rounded-2xl">
           <h2 className="text-2xl font-bold mb-2">
-            🤖 AI 智能分析(大概需要5min)
+            🤖 AI 智能分析
             <span className="ml-3 text-blue-600">
               {analysis.code} {analysis.stock_name}
             </span>
