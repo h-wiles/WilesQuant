@@ -74,7 +74,12 @@ cd frontend
 npm run dev     # 启动前端api
 ```
 
-## 📝 notion
-```text
-申请域名后将main.py中的allow_origins改成域名
-```
+
+## show 
+![img.png](figs/img.png)
+
+![img_1.png](figs/img_1.png)
+
+![img_2.png](figs/img_2.png)
+
+![img_3.png](figs/img_3.png)
